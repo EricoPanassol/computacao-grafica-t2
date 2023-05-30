@@ -4,6 +4,7 @@
 #   Autor: Márcio Sarroglia Pinho
 #       pinho@pucrs.br
 # ************************************************
+from math import cos, sin
 
 """ Classe Ponto """
 class Ponto:   
@@ -29,15 +30,25 @@ class Ponto:
     
 # Definicao de operadores
 # https://www.programiz.com/python-programming/operator-overloading
+
     def __add__(self, other):
             x = self.x + other.x
             y = self.y + other.y
-            return Ponto(x, y)
+            z = self.z + other.z
+            return Ponto(x, y, z)
 
     def __mul__(self, other: int):
             x = self.x * other
             y = self.y * other
-            return Ponto(x, y)
+            z = self.z * other
+            return Ponto(x, y, z)
+
+    def RotateY(self, angulo):
+        print('oiii')
+        anguloRad = angulo * 3.14159265359/180.0;
+        xr =  self.x*cos(anguloRad) + self.z*sin(anguloRad);
+        zr = -self.x*sin(anguloRad) + self.z*cos(anguloRad);
+        return Ponto(xr, self.y, zr)
 
 
 
@@ -51,7 +62,7 @@ class Ponto:
 # n : ponto final da reta 2                                              */
 # 
 # Retorna:
-# 0, se não houver interseccao ou 1, caso haja                                                                       */
+# 0, se não houver interseccao ou 1, caso haja                           */
 # int, valor do parâmetro no ponto de interseção (sobre a reta KL)       */
 # int, valor do parâmetro no ponto de interseção (sobre a reta MN)       */
 #                                                                        */

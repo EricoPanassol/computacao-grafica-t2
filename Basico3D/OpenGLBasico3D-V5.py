@@ -23,6 +23,7 @@
 #   Veja o arquivo Patch.rtf, armazenado na mesma pasta deste fonte.
 # 
 # ***********************************************************************************
+import math
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -31,10 +32,11 @@ from Linha import Linha
 #from PIL import Image
 import time
 
+# obsX, obsY, obsZ = 0,1,5
+running = False
 
-obs = [0,0,0]
-target = [0,0,0]
-obsX, obsY, obsZ = 0,1,5
+ObsPoint = Ponto(0,0,15)
+TargetPoint = Ponto(0,0,0)
 
 Angulo = 0.0
 # **********************************************************************
@@ -117,13 +119,12 @@ def DefineLuz():
 # **********************************************************************
 # DesenhaCubos()
 # Desenha o cenario
-#
 # **********************************************************************
 def DesenhaCubo():
     glutSolidCube(1)
     
 def PosicUser():
-    global obs, target
+    global ObsPoint
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     # Seta a viewport para ocupar toda a janela
@@ -133,11 +134,16 @@ def PosicUser():
     gluPerspective(60,AspectRatio,0.01,50) # Projecao perspectiva
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    # obs[0] = 0
-    # obs[1] = 1
-    # obs[2] = 5
-    # gluLookAt(obs[0],obs[1],obs[2],  0,0,0,  0,1,0) 
-    gluLookAt(obsX,obsY,obsZ,  0,0,0,  0,1,0) 
+    
+    # cuidar o esse if, pois se a direção for outra, será diferente
+    if(running):
+        ObsPoint.z = ObsPoint.z - 0.1
+        gluLookAt(ObsPoint.x,ObsPoint.y,ObsPoint.z,  TargetPoint.x,TargetPoint.y,TargetPoint.z,  0,1,0)
+    else:
+        gluLookAt(ObsPoint.x,ObsPoint.y,ObsPoint.z,  TargetPoint.x,TargetPoint.y,TargetPoint.z,  0,1,0)
+        
+
+
 
 # **********************************************************************
 # void DesenhaLadrilho(int corBorda, int corDentro)
@@ -180,7 +186,6 @@ def DesenhaPiso():
 # **********************************************************************
 # display()
 # Funcao que exibe os desenhos na tela
-#
 # **********************************************************************
 def display():
     global Angulo
@@ -237,6 +242,7 @@ def animate():
     if AccumDeltaT > 1.0/60:  # fixa a atualizaÃ§Ã£o da tela em 60
         AccumDeltaT = 0
         glutPostRedisplay()
+    
 
     
 
@@ -247,7 +253,9 @@ def animate():
 ESCAPE = b'\x1b'
 def keyboard(*args):
     global image
-    global obsX, obsY, obsZ
+    global ObsPoint
+    global TargetPoint
+    global running
     #print (args)
     # If escape is pressed, kill everything.
 
@@ -256,21 +264,27 @@ def keyboard(*args):
 
     if args[0] == b' ':
         init()
+        running = not running
 
     if args[0] == b'i':
         image.show()
-    
+     
     if args[0] == b'w':
-        obsZ -= 0.2
+        # ObsPoint.z -= 0.2
+        pass
         
     if args[0] == b's':
-        obsZ += 0.2
+        # ObsPoint.z += 0.2
+        pass
         
     if args[0] == b'a':
-        obsX -= 0.2
+        # ObsPoint.x -= 0.2
+        TargetPoint = TargetPoint.RotateY(5) # o ObsPoint funciona
+        pass
     
     if args[0] == b'd':
-        obsX += 0.2
+        # ObsPoint.x += 0.2
+        pass
 
     # ForÃ§a o redesenho da tela
     glutPostRedisplay()

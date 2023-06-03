@@ -23,7 +23,6 @@
 #   Veja o arquivo Patch.rtf, armazenado na mesma pasta deste fonte.
 # 
 # ***********************************************************************************
-import math
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -31,14 +30,13 @@ from Ponto import Ponto
 from Linha import Linha
 #from PIL import Image
 import time
+import math
 
-# obsX, obsY, obsZ = 0,1,5
-running = False
-
-ObsPoint = Ponto(0,0,15)
-TargetPoint = Ponto(0,0,0)
 
 Angulo = 0.0
+alvo = Ponto(0,0,0)
+observador = Ponto(0, 0, 10)
+moving = False
 # **********************************************************************
 #  init()
 #  Inicializa os parÃ¢metros globais de OpenGL
@@ -86,7 +84,7 @@ def DefineLuz():
     LuzAmbiente = [0.4, 0.4, 0.4] 
     LuzDifusa   = [0.7, 0.7, 0.7]
     LuzEspecular = [0.9, 0.9, 0.9]
-    PosicaoLuz0  = [2.0, 3.0, 0.0 ]  # posicao da Luz
+    PosicaoLuz0  = [2.0, 3.0, 0.0 ]  # PosiÃ§Ã£o da Luz
     Especularidade = [1.0, 1.0, 1.0]
 
     # ****************  Fonte de Luz 0
@@ -119,12 +117,13 @@ def DefineLuz():
 # **********************************************************************
 # DesenhaCubos()
 # Desenha o cenario
+#
 # **********************************************************************
 def DesenhaCubo():
     glutSolidCube(1)
     
 def PosicUser():
-    global ObsPoint
+
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     # Seta a viewport para ocupar toda a janela
@@ -134,16 +133,7 @@ def PosicUser():
     gluPerspective(60,AspectRatio,0.01,50) # Projecao perspectiva
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    
-    # cuidar o esse if, pois se a direção for outra, será diferente
-    if(running):
-        ObsPoint.z = ObsPoint.z - 0.1
-        gluLookAt(ObsPoint.x,ObsPoint.y,ObsPoint.z,  TargetPoint.x,TargetPoint.y,TargetPoint.z,  0,1,0)
-    else:
-        gluLookAt(ObsPoint.x,ObsPoint.y,ObsPoint.z,  TargetPoint.x,TargetPoint.y,TargetPoint.z,  0,1,0)
-        
-
-
+    gluLookAt(observador.x, observador.y, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
 
 # **********************************************************************
 # void DesenhaLadrilho(int corBorda, int corDentro)
@@ -151,7 +141,7 @@ def PosicUser():
 # O ladrilho tem largula 1, centro no (0,0,0) e estÃ¡ sobre o plano XZ
 # **********************************************************************
 def DesenhaLadrilho():
-    glColor3f(220,220,220) # desenha QUAD preenchido
+    glColor3f(0,0,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,1,0)
     glVertex3f(-0.5,  0.0, -0.5)
@@ -160,7 +150,7 @@ def DesenhaLadrilho():
     glVertex3f( 0.5,  0.0, -0.5)
     glEnd()
     
-    glColor3f(0,0,1) # desenha a borda da QUAD 
+    glColor3f(1,1,1) # desenha a borda da QUAD 
     glBegin ( GL_LINE_STRIP )
     glNormal3f(0,1,0)
     glVertex3f(-0.5,  0.0, -0.5)
@@ -186,6 +176,7 @@ def DesenhaPiso():
 # **********************************************************************
 # display()
 # Funcao que exibe os desenhos na tela
+#
 # **********************************************************************
 def display():
     global Angulo
@@ -239,10 +230,9 @@ def animate():
     TempoTotal += dt
     nFrames += 1
     
-    if AccumDeltaT > 1.0/60:  # fixa a atualizaÃ§Ã£o da tela em 60
+    if AccumDeltaT > 1.0/30:  # fixa a atualizaÃ§Ã£o da tela em 30
         AccumDeltaT = 0
         glutPostRedisplay()
-    
 
     
 
@@ -253,9 +243,7 @@ def animate():
 ESCAPE = b'\x1b'
 def keyboard(*args):
     global image
-    global ObsPoint
-    global TargetPoint
-    global running
+    global moving
     #print (args)
     # If escape is pressed, kill everything.
 
@@ -264,28 +252,24 @@ def keyboard(*args):
 
     if args[0] == b' ':
         init()
-        running = not running
 
     if args[0] == b'i':
         image.show()
-     
+
     if args[0] == b'w':
-        # ObsPoint.z -= 0.2
-        pass
-        
-    if args[0] == b's':
-        # ObsPoint.z += 0.2
-        pass
-        
-    if args[0] == b'a':
-        # ObsPoint.x -= 0.2
-        TargetPoint = TargetPoint.RotateY(5) # o ObsPoint funciona
-        pass
+        moving = True
+        moveForward(1)
     
     if args[0] == b'd':
-        # ObsPoint.x += 0.2
-        pass
+        rotaciona_alvo_horizontal(-3)
 
+    if args[0] == b'a':
+        rotaciona_alvo_horizontal(3)
+
+    if args[0] == b's':
+        moveBackward(1)
+
+    print(args)
     # ForÃ§a o redesenho da tela
     glutPostRedisplay()
 
@@ -294,17 +278,49 @@ def keyboard(*args):
 # **********************************************************************
 
 def arrow_keys(a_keys: int, x: int, y: int):
+    global alvo
+    
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
         pass
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         pass
-    if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
+    if a_keys == GLUT_KEY_RIGHT:       # Se pressionar LEFT
         pass
-
     glutPostRedisplay()
 
+def moveForward(fator):
+    global alvo
+    global observador
+    global Angulo
+    
+    vetor_alvo = alvo.__sub__(observador)
+    versor = vetor_alvo.versor()
+    #versor.imprime('Versor')
+    observador = observador.__add__(vetor_alvo.versor()).__mul__(fator)
+    alvo = alvo.__add__(vetor_alvo.versor()).__mul__(fator)
+
+def moveBackward(fator):
+    global alvo
+    global observador
+    global Angulo
+    
+    vetor_alvo = alvo.__sub__(observador)
+    versor = vetor_alvo.versor()
+    #versor.imprime('Versor')
+    observador = observador.__sub__(vetor_alvo.versor()).__mul__(fator)
+    alvo = alvo.__sub__(vetor_alvo.versor()).__mul__(fator)
+
+def rotaciona_alvo_horizontal(angulo_cam):
+    global alvo
+    global observador
+
+    vetor_alvo = alvo.__sub__(observador)
+    vetor_alvo.rotacionaY(angulo_cam)
+    #vetor_alvo.imprime("vetor alvo:")
+    alvo = observador.__add__(vetor_alvo)
+    #alvo.imprime("novo ponto alvo:")
 
 def mouse(button: int, state: int, x: int, y: int):
     glutPostRedisplay()
@@ -312,6 +328,8 @@ def mouse(button: int, state: int, x: int, y: int):
 def mouseMove(x: int, y: int):
     glutPostRedisplay()
 
+
+        
 # ***********************************************************************************
 # Programa Principal
 # ***********************************************************************************
@@ -325,7 +343,7 @@ glutInitWindowSize(650, 500)
 # Cria a janela na tela, definindo o nome da
 # que aparecera na barra de tÃ­tulo da janela.
 glutInitWindowPosition(100, 100)
-wind = glutCreateWindow("OpenGL 3D") # SRU -> SRD
+wind = glutCreateWindow("OpenGL 3D")
 
 # executa algumas inicializaÃ§Ãµes
 init ()

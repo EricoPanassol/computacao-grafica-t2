@@ -4,7 +4,8 @@
 #   Autor: Márcio Sarroglia Pinho
 #       pinho@pucrs.br
 # ************************************************
-from math import cos, sin
+
+import math
 
 """ Classe Ponto """
 class Ponto:   
@@ -30,27 +31,42 @@ class Ponto:
     
 # Definicao de operadores
 # https://www.programiz.com/python-programming/operator-overloading
-
     def __add__(self, other):
             x = self.x + other.x
             y = self.y + other.y
             z = self.z + other.z
             return Ponto(x, y, z)
 
-    def __mul__(self, other: int):
-            x = self.x * other
-            y = self.y * other
-            z = self.z * other
+    def __sub__(self,other):
+        x = self.x - other.x
+        y = self.y - other.y
+        z = self.z - other.z
+        return Ponto(x,y,z)
+
+    def __mul__(self, value: int):
+            x = self.x * value
+            y = self.y * value
+            z = self.z * value
             return Ponto(x, y, z)
+    
+    def modulo(self):
+        p = 2
+        return math.sqrt(math.pow(self.x,p) + math.pow(self.y,p) + math.pow(self.z, p))
 
-    def RotateY(self, angulo):
-        print('oiii')
-        anguloRad = angulo * 3.14159265359/180.0;
-        xr =  self.x*cos(anguloRad) + self.z*sin(anguloRad);
-        zr = -self.x*sin(anguloRad) + self.z*cos(anguloRad);
-        return Ponto(xr, self.y, zr)
+    def versor(self):
+        m = Ponto.modulo(self)
+        x = self.x/m
+        y = self.y/m
+        z = self.z/m
+        return Ponto(x,y,z)
 
-
+    def rotacionaY(self, angulo):
+        anguloRad = angulo * math.pi/180.0
+        xr =  self.x*math.cos(anguloRad) + self.z*math.sin(anguloRad)
+        zr = -self.x*math.sin(anguloRad) + self.z*math.cos(anguloRad)
+        
+        self.x = xr
+        self.z = zr
 
 # ********************************************************************** */
 #                                                                        */
@@ -62,7 +78,7 @@ class Ponto:
 # n : ponto final da reta 2                                              */
 # 
 # Retorna:
-# 0, se não houver interseccao ou 1, caso haja                           */
+# 0, se não houver interseccao ou 1, caso haja                                                                       */
 # int, valor do parâmetro no ponto de interseção (sobre a reta KL)       */
 # int, valor do parâmetro no ponto de interseção (sobre a reta MN)       */
 #                                                                        */

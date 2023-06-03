@@ -34,9 +34,16 @@ import math
 
 
 Angulo = 0.0
+Angulo_Carro = 0.0
+Pos_Carro = Ponto(0,0,5)
 alvo = Ponto(0,0,0)
-observador = Ponto(0, 0, 10)
+observador = Ponto(0, 2, 10)
+thirdPerson = False
+upView = False
+turning = 0
 moving = False
+ultimo_vetor_alvo = alvo.__sub__(observador)
+atual_vetor_alvo = alvo.__sub__(observador)
 # **********************************************************************
 #  init()
 #  Inicializa os parÃ¢metros globais de OpenGL
@@ -133,7 +140,14 @@ def PosicUser():
     gluPerspective(60,AspectRatio,0.01,50) # Projecao perspectiva
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    gluLookAt(observador.x, observador.y, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
+    #gluLookAt(observador.x, observador.y+2, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
+
+    if(thirdPerson):
+        gluLookAt(observador.x, observador.y+2, observador.z+3, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
+    elif(upView):
+        gluLookAt(0,20,0.1, 0,0,0,  0,1,0)
+    else:
+        gluLookAt(observador.x, observador.y, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0)
 
 # **********************************************************************
 # void DesenhaLadrilho(int corBorda, int corDentro)
@@ -180,7 +194,9 @@ def DesenhaPiso():
 # **********************************************************************
 def display():
     global Angulo
+    global Angulo_Carro
     global moving
+    global turning
     # Limpa a tela com  a cor de fundo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -189,7 +205,6 @@ def display():
 
     glMatrixMode(GL_MODELVIEW)
     
-     
     DesenhaPiso()
     glColor3f(0.5,0.0,0.0) # Vermelho
     glPushMatrix()
@@ -206,6 +221,27 @@ def display():
     glPopMatrix()
 
     Angulo = Angulo + 1
+
+    glColor3f(0.5,1,0.9) 
+    glPushMatrix()
+    glTranslatef(alvo.x, 0.0, alvo.z)
+    DesenhaCubo()
+    glPopMatrix()
+
+    #car
+    glColor3f(1,0,1)
+    glPushMatrix()
+    glTranslatef(Pos_Carro.x,Pos_Carro.y,Pos_Carro.z)
+    glRotatef(Angulo_Carro,0,1,0)
+    DesenhaCubo()
+    glPopMatrix()
+
+    #car do eriquin
+    glColor3f(1,1,1)
+    glPushMatrix()
+    glTranslatef(observador.x,-0.1,observador.z)
+    DesenhaCubo()
+    glPopMatrix()
 
     if(moving):
         moveForward(1)
@@ -248,6 +284,10 @@ ESCAPE = b'\x1b'
 def keyboard(*args):
     global image
     global moving
+    global turning
+    global Angulo_Carro
+    global ultimo_vetor_alvo
+    global atual_vetor_alvo
     #print (args)
     # If escape is pressed, kill everything.
 
@@ -264,10 +304,14 @@ def keyboard(*args):
         moveForward(1)
     
     if args[0] == b'd':
-        rotaciona_alvo_horizontal(-10)
+        rotaciona_alvo(-10)
+        rotaciona_observador(-10)
+        Angulo_Carro = Angulo_Carro + 10*-1
 
     if args[0] == b'a':
-        rotaciona_alvo_horizontal(10)
+        rotaciona_alvo(10)
+        rotaciona_observador(10)
+        Angulo_Carro = Angulo_Carro + 10*1
 
     if args[0] == b's':
         moveBackward(1)
@@ -284,11 +328,13 @@ def keyboard(*args):
 # **********************************************************************
 
 def arrow_keys(a_keys: int, x: int, y: int):
-    global alvo
-    
+    global alvo, thirdPerson, upView
+
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
+        thirdPerson = not thirdPerson
         pass
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
+        upView = not upView
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         pass
@@ -299,9 +345,11 @@ def arrow_keys(a_keys: int, x: int, y: int):
 def moveForward(fator):
     global alvo
     global observador
+    global Pos_Carro
     
-    vetor_alvo = alvo.__sub__(observador)
+    vetor_alvo = alvo.__sub__(Pos_Carro)
     alvo = alvo.__add__(vetor_alvo.versor().__mul__(fator))
+    Pos_Carro = Pos_Carro.__add__(vetor_alvo.versor().__mul__(fator))
     print(f"ALVO NP: x: {alvo.x},y: {alvo.y},z: {alvo.z}")
     observador = observador.__add__(vetor_alvo.versor().__mul__(fator))
     print(f"OBSERVADOR NP: x: {observador.x},y: {observador.y},z: {observador.z}")
@@ -310,20 +358,46 @@ def moveForward(fator):
 def moveBackward(fator):
     global alvo
     global observador
+    global Pos_Carro
     
     vetor_alvo = alvo.__sub__(observador)
     alvo = alvo.__sub__(vetor_alvo.versor()).__mul__(fator)
+    Pos_Carro = Pos_Carro.__sub__(vetor_alvo.versor().__mul__(fator))
     observador = observador.__sub__(vetor_alvo.versor()).__mul__(fator)
     
 
-def rotaciona_alvo_horizontal(angulo_cam):
+def rotaciona_alvo(angulo_cam):
     global alvo
     global observador
+    global ultimo_vetor_alvo
+    global atual_vetor_alvo
+    global Pos_Carro
 
-    vetor_alvo = alvo.__sub__(observador)
+    ultimo_vetor_alvo = atual_vetor_alvo
+
+    vetor_alvo = alvo.__sub__(Pos_Carro)
     vetor_alvo.rotacionaY(angulo_cam)
-    alvo = observador.__add__(vetor_alvo)
 
+    atual_vetor_alvo = vetor_alvo
+
+    alvo = Pos_Carro.__add__(vetor_alvo)
+
+
+def rotaciona_observador(angulo_cam):
+    global alvo
+    global observador
+    global ultimo_vetor_alvo
+    global atual_vetor_alvo
+    global Pos_Carro
+
+    #ultimo_vetor_alvo = atual_vetor_alvo
+
+    vetor_alvo = observador.__sub__(Pos_Carro)
+    vetor_alvo.rotacionaY(angulo_cam)
+
+    #atual_vetor_alvo = vetor_alvo
+
+    observador = Pos_Carro.__add__(vetor_alvo)
 
 def mouse(button: int, state: int, x: int, y: int):
     glutPostRedisplay()

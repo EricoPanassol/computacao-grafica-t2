@@ -144,19 +144,19 @@ def DesenhaLadrilho():
     glColor3f(0,0,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,1,0)
-    glVertex3f(-0.5,  0.0, -0.5)
-    glVertex3f(-0.5,  0.0,  0.5)
-    glVertex3f( 0.5,  0.0,  0.5)
-    glVertex3f( 0.5,  0.0, -0.5)
+    glVertex3f(-5,  0.0, -5)
+    glVertex3f(-5,  0.0,  5)
+    glVertex3f( 5,  0.0,  5)
+    glVertex3f( 5,  0.0, -5)
     glEnd()
     
     glColor3f(1,1,1) # desenha a borda da QUAD 
     glBegin ( GL_LINE_STRIP )
     glNormal3f(0,1,0)
-    glVertex3f(-0.5,  0.0, -0.5)
-    glVertex3f(-0.5,  0.0,  0.5)
-    glVertex3f( 0.5,  0.0,  0.5)
-    glVertex3f( 0.5,  0.0, -0.5)
+    glVertex3f(-5,  0.0, -5)
+    glVertex3f(-5,  0.0,  5)
+    glVertex3f( 5,  0.0,  5)
+    glVertex3f( 5,  0.0, -5)
     glEnd()
     
 # **********************************************************************
@@ -167,9 +167,9 @@ def DesenhaPiso():
         glPushMatrix()
         for z in range(-20, 20):
             DesenhaLadrilho()
-            glTranslated(0, 0, 1)
+            glTranslated(0, 0, 10)
         glPopMatrix()
-        glTranslated(1, 0, 0)
+        glTranslated(10, 0, 0)
     glPopMatrix()     
 
 
@@ -180,6 +180,7 @@ def DesenhaPiso():
 # **********************************************************************
 def display():
     global Angulo
+    global moving
     # Limpa a tela com  a cor de fundo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -205,6 +206,9 @@ def display():
     glPopMatrix()
 
     Angulo = Angulo + 1
+
+    if(moving):
+        moveForward(1)
 
     glutSwapBuffers()
 
@@ -257,18 +261,20 @@ def keyboard(*args):
         image.show()
 
     if args[0] == b'w':
-        moving = True
         moveForward(1)
     
     if args[0] == b'd':
-        rotaciona_alvo_horizontal(-3)
+        rotaciona_alvo_horizontal(-10)
 
     if args[0] == b'a':
-        rotaciona_alvo_horizontal(3)
+        rotaciona_alvo_horizontal(10)
 
     if args[0] == b's':
         moveBackward(1)
 
+    if args[0] == b' ':
+        moving = not moving
+        
     print(args)
     # ForÃ§a o redesenho da tela
     glutPostRedisplay()
@@ -286,31 +292,29 @@ def arrow_keys(a_keys: int, x: int, y: int):
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         pass
-    if a_keys == GLUT_KEY_RIGHT:       # Se pressionar LEFT
+    if a_keys == GLUT_KEY_RIGHT:       # Se pressionar RIGHT
         pass
     glutPostRedisplay()
 
 def moveForward(fator):
     global alvo
     global observador
-    global Angulo
     
     vetor_alvo = alvo.__sub__(observador)
-    versor = vetor_alvo.versor()
-    #versor.imprime('Versor')
-    observador = observador.__add__(vetor_alvo.versor()).__mul__(fator)
-    alvo = alvo.__add__(vetor_alvo.versor()).__mul__(fator)
+    alvo = alvo.__add__(vetor_alvo.versor().__mul__(fator))
+    print(f"ALVO NP: x: {alvo.x},y: {alvo.y},z: {alvo.z}")
+    observador = observador.__add__(vetor_alvo.versor().__mul__(fator))
+    print(f"OBSERVADOR NP: x: {observador.x},y: {observador.y},z: {observador.z}")
+    
 
 def moveBackward(fator):
     global alvo
     global observador
-    global Angulo
     
     vetor_alvo = alvo.__sub__(observador)
-    versor = vetor_alvo.versor()
-    #versor.imprime('Versor')
-    observador = observador.__sub__(vetor_alvo.versor()).__mul__(fator)
     alvo = alvo.__sub__(vetor_alvo.versor()).__mul__(fator)
+    observador = observador.__sub__(vetor_alvo.versor()).__mul__(fator)
+    
 
 def rotaciona_alvo_horizontal(angulo_cam):
     global alvo
@@ -318,9 +322,8 @@ def rotaciona_alvo_horizontal(angulo_cam):
 
     vetor_alvo = alvo.__sub__(observador)
     vetor_alvo.rotacionaY(angulo_cam)
-    #vetor_alvo.imprime("vetor alvo:")
     alvo = observador.__add__(vetor_alvo)
-    #alvo.imprime("novo ponto alvo:")
+
 
 def mouse(button: int, state: int, x: int, y: int):
     glutPostRedisplay()

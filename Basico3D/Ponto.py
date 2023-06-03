@@ -43,7 +43,7 @@ class Ponto:
         z = self.z - other.z
         return Ponto(x,y,z)
 
-    def __mul__(self, value: int):
+    def __mul__(self, value: float):
             x = self.x * value
             y = self.y * value
             z = self.z * value

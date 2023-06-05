@@ -42,8 +42,6 @@ thirdPerson = False
 upView = False
 turning = 0
 moving = False
-ultimo_vetor_alvo = alvo.__sub__(observador)
-atual_vetor_alvo = alvo.__sub__(observador)
 # **********************************************************************
 #  init()
 #  Inicializa os parÃ¢metros globais de OpenGL
@@ -286,8 +284,6 @@ def keyboard(*args):
     global moving
     global turning
     global Angulo_Carro
-    global ultimo_vetor_alvo
-    global atual_vetor_alvo
     #print (args)
     # If escape is pressed, kill everything.
 
@@ -360,25 +356,22 @@ def moveBackward(fator):
     global observador
     global Pos_Carro
     
-    vetor_alvo = alvo.__sub__(observador)
-    alvo = alvo.__sub__(vetor_alvo.versor()).__mul__(fator)
+    vetor_alvo = alvo.__sub__(Pos_Carro)
+    alvo = alvo.__sub__(vetor_alvo.versor().__mul__(fator))
     Pos_Carro = Pos_Carro.__sub__(vetor_alvo.versor().__mul__(fator))
-    observador = observador.__sub__(vetor_alvo.versor()).__mul__(fator)
+    print(f"ALVO NP: x: {alvo.x},y: {alvo.y},z: {alvo.z}")
+    observador = observador.__sub__(vetor_alvo.versor().__mul__(fator))
+    print(f"OBSERVADOR NP: x: {observador.x},y: {observador.y},z: {observador.z}")
     
 
 def rotaciona_alvo(angulo_cam):
     global alvo
     global observador
-    global ultimo_vetor_alvo
     global atual_vetor_alvo
     global Pos_Carro
 
-    ultimo_vetor_alvo = atual_vetor_alvo
-
     vetor_alvo = alvo.__sub__(Pos_Carro)
     vetor_alvo.rotacionaY(angulo_cam)
-
-    atual_vetor_alvo = vetor_alvo
 
     alvo = Pos_Carro.__add__(vetor_alvo)
 
@@ -386,16 +379,10 @@ def rotaciona_alvo(angulo_cam):
 def rotaciona_observador(angulo_cam):
     global alvo
     global observador
-    global ultimo_vetor_alvo
-    global atual_vetor_alvo
     global Pos_Carro
-
-    #ultimo_vetor_alvo = atual_vetor_alvo
 
     vetor_alvo = observador.__sub__(Pos_Carro)
     vetor_alvo.rotacionaY(angulo_cam)
-
-    #atual_vetor_alvo = vetor_alvo
 
     observador = Pos_Carro.__add__(vetor_alvo)
 

@@ -37,11 +37,13 @@ Angulo = 0.0
 Angulo_Carro = 0.0
 Pos_Carro = Ponto(0,0,5)
 alvo = Ponto(0,0,0)
-observador = Ponto(0, 2, 10)
+alvo_camera = Ponto(0,0,0)
+observador = Ponto(0, 4, 13)
 thirdPerson = False
 upView = False
 turning = 0
 moving = False
+camera_view = 0
 # **********************************************************************
 #  init()
 #  Inicializa os parÃ¢metros globais de OpenGL
@@ -128,6 +130,7 @@ def DesenhaCubo():
     glutSolidCube(1)
     
 def PosicUser():
+    global camera_view, observador, alvo, Pos_Carro, alvo_camera
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
@@ -140,12 +143,30 @@ def PosicUser():
     glLoadIdentity()
     #gluLookAt(observador.x, observador.y+2, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
 
-    if(thirdPerson):
-        gluLookAt(observador.x, observador.y+2, observador.z+3, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
-    elif(upView):
-        gluLookAt(0,20,0.1, 0,0,0,  0,1,0)
-    else:
-        gluLookAt(observador.x, observador.y, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0)
+    # if(thirdPerson):
+    #     gluLookAt(observador.x, observador.y+2, observador.z+3, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
+    # elif(upView):
+    #     gluLookAt(0,20,0.1, 0,0,0,  0,1,0)
+    # else:
+    #     gluLookAt(observador.x, observador.y, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0)
+
+    if camera_view == 0:
+        vetor_alvo = alvo.__sub__(Pos_Carro)
+        vetor_alvo = vetor_alvo.__mul__(1.5)
+
+        obs_pos = Pos_Carro.__sub__(vetor_alvo)
+        alvo_camera = alvo
+        observador = Ponto(obs_pos.x, obs_pos.y+3, obs_pos.z)
+    
+    elif camera_view == 1:
+        alvo_camera = alvo
+        observador = Ponto(Pos_Carro.x,Pos_Carro.y+20,Pos_Carro.z)
+
+    elif camera_view == 2:
+        alvo_camera = alvo
+        observador = Ponto(Pos_Carro.x,Pos_Carro.y+1,Pos_Carro.z)
+
+    gluLookAt(observador.x, observador.y, observador.z, alvo_camera.x,alvo_camera.y,alvo_camera.z, 0,1.0,0)
 
 # **********************************************************************
 # void DesenhaLadrilho(int corBorda, int corDentro)
@@ -220,11 +241,11 @@ def display():
 
     Angulo = Angulo + 1
 
-    glColor3f(0.5,1,0.9) 
-    glPushMatrix()
-    glTranslatef(alvo.x, 0.0, alvo.z)
-    DesenhaCubo()
-    glPopMatrix()
+    # glColor3f(0.5,1,0.9) 
+    # glPushMatrix()
+    # glTranslatef(alvo.x, 0.0, alvo.z)
+    # DesenhaCubo()
+    # glPopMatrix()
 
     #car
     glColor3f(1,0,1)
@@ -235,11 +256,11 @@ def display():
     glPopMatrix()
 
     #car do eriquin
-    glColor3f(1,1,1)
-    glPushMatrix()
-    glTranslatef(observador.x,-0.1,observador.z)
-    DesenhaCubo()
-    glPopMatrix()
+    # glColor3f(1,1,1)
+    # glPushMatrix()
+    # glTranslatef(observador.x,-0.1,observador.z)
+    # DesenhaCubo()
+    # glPopMatrix()
 
     if(moving):
         moveForward(1)
@@ -327,10 +348,9 @@ def arrow_keys(a_keys: int, x: int, y: int):
     global alvo, thirdPerson, upView
 
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
-        thirdPerson = not thirdPerson
+        change_camera_view()
         pass
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        upView = not upView
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         pass
@@ -346,9 +366,7 @@ def moveForward(fator):
     vetor_alvo = alvo.__sub__(Pos_Carro)
     alvo = alvo.__add__(vetor_alvo.versor().__mul__(fator))
     Pos_Carro = Pos_Carro.__add__(vetor_alvo.versor().__mul__(fator))
-    print(f"ALVO NP: x: {alvo.x},y: {alvo.y},z: {alvo.z}")
     observador = observador.__add__(vetor_alvo.versor().__mul__(fator))
-    print(f"OBSERVADOR NP: x: {observador.x},y: {observador.y},z: {observador.z}")
     
 
 def moveBackward(fator):
@@ -359,10 +377,19 @@ def moveBackward(fator):
     vetor_alvo = alvo.__sub__(Pos_Carro)
     alvo = alvo.__sub__(vetor_alvo.versor().__mul__(fator))
     Pos_Carro = Pos_Carro.__sub__(vetor_alvo.versor().__mul__(fator))
-    print(f"ALVO NP: x: {alvo.x},y: {alvo.y},z: {alvo.z}")
     observador = observador.__sub__(vetor_alvo.versor().__mul__(fator))
-    print(f"OBSERVADOR NP: x: {observador.x},y: {observador.y},z: {observador.z}")
     
+
+def change_camera_view():
+    global camera_view
+
+    camera_view += 1 
+
+    if camera_view == 3:
+        camera_view = 0
+
+    print(f"Camera View: {camera_view}")
+        
 
 def rotaciona_alvo(angulo_cam):
     global alvo

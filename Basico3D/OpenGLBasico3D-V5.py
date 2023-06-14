@@ -28,29 +28,33 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from Ponto import Ponto
 from Linha import Linha
-#from PIL import Image
+from copy import copy
+import numpy as np
+from PIL import Image
+import random
+import os.path
 import time
 import math
 
-
 Angulo = 0.0
 Angulo_Carro = 0.0
-Pos_Carro = Ponto(0,0,5)
-alvo = Ponto(0,0,0)
+Pos_Carro = Ponto(5,0,20)
+alvo = Ponto(Pos_Carro.x,0,Pos_Carro.z+5)
 alvo_camera = Ponto(0,0,0)
 observador = Ponto(0, 4, 13)
-thirdPerson = False
-upView = False
-turning = 0
 moving = False
 camera_view = 0
+Texturas = []
+gasolinas_no_mapa = 0
+gasolinas = []
+tanque = 100
 # **********************************************************************
 #  init()
 #  Inicializa os parÃ¢metros globais de OpenGL
 #/ **********************************************************************
 def init():
     # Define a cor do fundo da tela (BRANCO) 
-    glClearColor(0.5, 0.5, 0.5, 1.0)
+    glClearColor(76/256, 169/256, 250/256, 1.0)
 
     glClearDepth(1.0) 
     glDepthFunc(GL_LESS)
@@ -62,7 +66,6 @@ def init():
     #print ("X:", image.size[0])
     #print ("Y:", image.size[1])
     #image.show()
-    
    
 
 # **********************************************************************
@@ -126,6 +129,17 @@ def DefineLuz():
 # Desenha o cenario
 #
 # **********************************************************************
+
+def enche_tanque():
+    global tanque
+
+    if tanque + 10 > 100:
+        tanque = 100
+        return
+    
+    tanque += 10
+
+
 def DesenhaCubo():
     glutSolidCube(1)
     
@@ -138,33 +152,35 @@ def PosicUser():
     # glViewport(0, 0, 500, 500)
     #print ("AspectRatio", AspectRatio)
     
-    gluPerspective(60,AspectRatio,0.01,50) # Projecao perspectiva
+    gluPerspective(60,AspectRatio,0.01,1000) # Projecao perspectiva
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
     #gluLookAt(observador.x, observador.y+2, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
-
-    # if(thirdPerson):
-    #     gluLookAt(observador.x, observador.y+2, observador.z+3, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
-    # elif(upView):
-    #     gluLookAt(0,20,0.1, 0,0,0,  0,1,0)
-    # else:
-    #     gluLookAt(observador.x, observador.y, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0)
 
     if camera_view == 0:
         vetor_alvo = alvo.__sub__(Pos_Carro)
         vetor_alvo = vetor_alvo.__mul__(1.5)
 
         obs_pos = Pos_Carro.__sub__(vetor_alvo)
-        alvo_camera = alvo
+        alvo_camera.x = alvo.x
+        alvo_camera.z = alvo.z
         observador = Ponto(obs_pos.x, obs_pos.y+3, obs_pos.z)
     
     elif camera_view == 1:
-        alvo_camera = alvo
-        observador = Ponto(Pos_Carro.x,Pos_Carro.y+20,Pos_Carro.z)
+        alvo_camera.x = alvo.x
+        alvo_camera.z = alvo.z
+        observador = Ponto(Pos_Carro.x,Pos_Carro.y+100,Pos_Carro.z)
 
     elif camera_view == 2:
-        alvo_camera = alvo
+        alvo_camera.x = alvo.x
+        alvo_camera.z = alvo.z
         observador = Ponto(Pos_Carro.x,Pos_Carro.y+1,Pos_Carro.z)
+
+    elif camera_view == 3:
+        alvo_camera.x = 225
+        alvo_camera.y = 1
+        alvo_camera.z = 225
+        observador = Ponto(225,390,224)
 
     gluLookAt(observador.x, observador.y, observador.z, alvo_camera.x,alvo_camera.y,alvo_camera.z, 0,1.0,0)
 
@@ -174,38 +190,172 @@ def PosicUser():
 # O ladrilho tem largula 1, centro no (0,0,0) e estÃ¡ sobre o plano XZ
 # **********************************************************************
 def DesenhaLadrilho():
-    glColor3f(0,0,1) # desenha QUAD preenchido
+    glColor3f(0.5,0.5,0.5) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,1,0)
-    glVertex3f(-5,  0.0, -5)
-    glVertex3f(-5,  0.0,  5)
-    glVertex3f( 5,  0.0,  5)
-    glVertex3f( 5,  0.0, -5)
+    glTexCoord(0,0)
+    glVertex3f(0,  0.0, 0)
+    glTexCoord(0,1)
+    glVertex3f(0,  0.0,  15)
+    glTexCoord(1,1)
+    glVertex3f( 15,  0.0,  15)
+    glTexCoord(1,0)
+    glVertex3f( 15,  0.0, 0)
     glEnd()
     
-    glColor3f(1,1,1) # desenha a borda da QUAD 
-    glBegin ( GL_LINE_STRIP )
-    glNormal3f(0,1,0)
-    glVertex3f(-5,  0.0, -5)
-    glVertex3f(-5,  0.0,  5)
-    glVertex3f( 5,  0.0,  5)
-    glVertex3f( 5,  0.0, -5)
-    glEnd()
+    # glColor3f(1,1,1) # desenha a borda da QUAD 
+    # glBegin ( GL_LINE_STRIP )
+    # glNormal3f(0,1,0)
+    # glVertex3f(-7.5,  0.0, -7.5)
+    # glVertex3f(-7.5,  0.0,  7.5)
+    # glVertex3f( 7.5,  0.0,  7.5)
+    # glVertex3f( 7.5,  0.0, -7.5)
+    # glEnd()
     
 # **********************************************************************
 def DesenhaPiso():
     glPushMatrix()
-    glTranslated(-20,-1,-10)
-    for x in range(-20, 20):
+    glTranslated(0,-1,0)
+    for x in range(-15, 15):
         glPushMatrix()
-        for z in range(-20, 20):
+        for z in range(-15, 15):
+            UseTexture((matrizMapa[z+15][x+15]))
             DesenhaLadrilho()
-            glTranslated(0, 0, 10)
+            glTranslated(0, 0, 15)
         glPopMatrix()
-        glTranslated(10, 0, 0)
+        glTranslated(15, 0, 0)
     glPopMatrix()     
 
+def lerMatriz(arquivo):
+    matriz = []
+    with open(os.path.dirname(__file__) + arquivo, 'r') as file:
+        linhas = file.readlines()
+        for linha in linhas[1:]:
+            elementos = linha.strip().split()
+            matriz.append([int(elemento) for elemento in elementos])
+    return matriz
 
+def LoadTexture(nome) -> int:
+    # carrega a imagem
+    image = Image.open(nome)
+    # print ("X:", image.size[0])
+    # print ("Y:", image.size[1])
+    # converte para o formato de OpenGL 
+    img_data = np.array(list(image.getdata()), np.uint8)
+
+    # Habilita o uso de textura
+    glEnable ( GL_TEXTURE_2D )
+
+    #Cria um ID para texura
+    texture = glGenTextures(1)
+    errorCode =  glGetError()
+    if errorCode == GL_INVALID_OPERATION: 
+        print ("Erro: glGenTextures chamada entre glBegin/glEnd.")
+        return -1
+
+    # Define a forma de armazenamento dos pixels na textura (1= alihamento por byte)
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+    # Define que tipo de textura ser usada
+    # GL_TEXTURE_2D ==> define que ser· usada uma textura 2D (bitmaps)
+    # e o nro dela
+    glBindTexture(GL_TEXTURE_2D, texture)
+
+    # texture wrapping params
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+    # texture filtering params
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+    errorCode = glGetError()
+    if errorCode != GL_NO_ERROR:
+        print ("Houve algum erro na criacao da textura.")
+        return -1
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.size[0], image.size[1], 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
+    # neste ponto, "texture" tem o nro da textura que foi carregada
+    errorCode = glGetError()
+    if errorCode == GL_INVALID_OPERATION:
+        print ("Erro: glTexImage2D chamada entre glBegin/glEnd.")
+        return -1
+
+    if errorCode != GL_NO_ERROR:
+        print ("Houve algum erro na criacao da textura.")
+        return -1
+    #image.show()
+    return texture
+
+def UseTexture (NroDaTextura: int):
+    global Texturas
+    if (NroDaTextura>len(Texturas)):
+        print ("Numero invalido da textura.")
+        glDisable (GL_TEXTURE_2D)
+        return
+    if (NroDaTextura < 0):
+        glDisable (GL_TEXTURE_2D)
+    else:
+        glEnable (GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, Texturas[NroDaTextura])
+
+def testaColisao(proxima_pos):
+    pos_x_matriz = proxima_pos.x/15
+    pos_z_matriz = proxima_pos.z/15
+
+    print(f"pos x: {pos_x_matriz}\npos z: {pos_z_matriz}\n")
+    
+    if pos_x_matriz >= 30 or pos_x_matriz <= 0:
+        return True
+
+    if pos_z_matriz >= 30 or pos_z_matriz <= 0:
+        return True
+
+    if matrizMapa[int(pos_z_matriz)][int(pos_x_matriz)] == 0 or matrizMapa[int(pos_x_matriz)][int(pos_z_matriz)] > 12:
+        return True
+    
+    return False
+
+def spawn_gasolina():
+    global matrizMapa, gasolinas_no_mapa, gasolinas
+
+    while gasolinas_no_mapa < 5:
+        x_gasolina = random.randint(1,449)
+        z_gasolina = random.randint(1,449)
+
+        x_gas_abs = int(x_gasolina/15)
+        z_gas_abs = int(z_gasolina/15)
+
+        if matrizMapa[z_gas_abs][x_gas_abs] > 0 and matrizMapa[z_gas_abs][x_gas_abs] <= 12:
+            nova_gasolina = Ponto(x_gasolina,0,z_gasolina)
+            gasolinas.append(nova_gasolina)
+            gasolinas_no_mapa += 1
+            print(f"Galão de gasolina spawnado em x:{nova_gasolina.x} z:{nova_gasolina.z}")
+    
+
+
+def get_gasolina():
+    global gasolinas_no_mapa, tanque
+
+    for gas in gasolinas:
+        if int(gas.x/15) == int(Pos_Carro.x/15) and int(gas.z/15) == int(Pos_Carro.z/15):
+            gasolinas.remove(gas)
+            gasolinas_no_mapa -= 1
+            tanque += 10
+            print("PLIM gasalina c:")
+            return
+        
+def desenha_gasolinas():
+    for gas in gasolinas:
+        glColor3f(1,0,0)
+        glPushMatrix()
+        glTranslatef(gas.x,gas.y,gas.z)
+        DesenhaCubo()
+        glPopMatrix()
+        
+    
+
+def printMatriz(matriz):
+    for linha in matriz:
+        print(linha)
 # **********************************************************************
 # display()
 # Funcao que exibe os desenhos na tela
@@ -215,12 +365,12 @@ def display():
     global Angulo
     global Angulo_Carro
     global moving
-    global turning
     # Limpa a tela com  a cor de fundo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     DefineLuz()
     PosicUser()
+    spawn_gasolina()
 
     glMatrixMode(GL_MODELVIEW)
     
@@ -255,6 +405,7 @@ def display():
     DesenhaCubo()
     glPopMatrix()
 
+    desenha_gasolinas()
     #car do eriquin
     # glColor3f(1,1,1)
     # glPushMatrix()
@@ -303,8 +454,10 @@ ESCAPE = b'\x1b'
 def keyboard(*args):
     global image
     global moving
-    global turning
     global Angulo_Carro
+    global alvo_camera
+
+    var_angulo = 15
     #print (args)
     # If escape is pressed, kill everything.
 
@@ -321,20 +474,27 @@ def keyboard(*args):
         moveForward(1)
     
     if args[0] == b'd':
-        rotaciona_alvo(-10)
-        rotaciona_observador(-10)
-        Angulo_Carro = Angulo_Carro + 10*-1
+        rotaciona_alvo(-var_angulo)
+        rotaciona_observador(-var_angulo)
+        Angulo_Carro = Angulo_Carro + var_angulo*-1
 
     if args[0] == b'a':
-        rotaciona_alvo(10)
-        rotaciona_observador(10)
-        Angulo_Carro = Angulo_Carro + 10*1
+        rotaciona_alvo(var_angulo)
+        rotaciona_observador(var_angulo)
+        Angulo_Carro = Angulo_Carro + var_angulo*1
 
     if args[0] == b's':
         moveBackward(1)
 
     if args[0] == b' ':
         moving = not moving
+
+    if args[0] == b'u':
+        alvo_camera.y += 1
+
+    if args[0] == b'j':
+        alvo_camera.y -= 1
+
         
     print(args)
     # ForÃ§a o redesenho da tela
@@ -345,12 +505,13 @@ def keyboard(*args):
 # **********************************************************************
 
 def arrow_keys(a_keys: int, x: int, y: int):
-    global alvo, thirdPerson, upView
+    global alvo, matrizMapa
 
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
         change_camera_view()
         pass
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
+        printMatriz(matrizMapa)
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         pass
@@ -362,11 +523,29 @@ def moveForward(fator):
     global alvo
     global observador
     global Pos_Carro
-    
-    vetor_alvo = alvo.__sub__(Pos_Carro)
-    alvo = alvo.__add__(vetor_alvo.versor().__mul__(fator))
-    Pos_Carro = Pos_Carro.__add__(vetor_alvo.versor().__mul__(fator))
-    observador = observador.__add__(vetor_alvo.versor().__mul__(fator))
+    global moving
+    global tanque
+
+    if tanque > 0:
+        vetor_alvo = alvo.__sub__(Pos_Carro)
+        nova_pos_alvo = alvo.__add__(vetor_alvo.versor().__mul__(fator))
+        nova_pos_car = Pos_Carro.__add__(vetor_alvo.versor().__mul__(fator))
+        nova_pos_obs = observador = observador.__add__(vetor_alvo.versor().__mul__(fator))
+
+        colided = testaColisao(nova_pos_car)
+        get_gasolina()
+            
+        if colided:
+            moving = False   
+            return
+
+        alvo = nova_pos_alvo
+        Pos_Carro = nova_pos_car
+        observador = nova_pos_obs
+
+        tanque -= 0.1
+
+        Pos_Carro.imprime()
     
 
 def moveBackward(fator):
@@ -385,7 +564,7 @@ def change_camera_view():
 
     camera_view += 1 
 
-    if camera_view == 3:
+    if camera_view == 4:
         camera_view = 0
 
     print(f"Camera View: {camera_view}")
@@ -419,11 +598,16 @@ def mouse(button: int, state: int, x: int, y: int):
 def mouseMove(x: int, y: int):
     glutPostRedisplay()
 
-
+def testaColisaoCarro():
+    global Pos_Carro
         
 # ***********************************************************************************
 # Programa Principal
 # ***********************************************************************************
+
+matrizMapa = lerMatriz("/Textures/Mapa1.txt")
+
+#Texturas.append(LoadTexture("/Textures/NADA.png"))
 
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA|GLUT_DEPTH | GLUT_RGB)
@@ -438,6 +622,20 @@ wind = glutCreateWindow("OpenGL 3D")
 
 # executa algumas inicializaÃ§Ãµes
 init ()
+
+Texturas.append(LoadTexture("Textures/GRASS.jpg"))
+Texturas.append(LoadTexture("Textures/CROSS.jpg"))
+Texturas.append(LoadTexture("Textures/DL.jpg"))
+Texturas.append(LoadTexture("Textures/DLR.jpg"))
+Texturas.append(LoadTexture("Textures/DR.jpg"))
+Texturas.append(LoadTexture("Textures/LR.jpg"))
+Texturas.append(LoadTexture("Textures/None.jpg"))
+Texturas.append(LoadTexture("Textures/UD.jpg"))
+Texturas.append(LoadTexture("Textures/UDL.jpg"))
+Texturas.append(LoadTexture("Textures/UDR.jpg"))
+Texturas.append(LoadTexture("Textures/UL.jpg"))
+Texturas.append(LoadTexture("Textures/ULR.jpg"))
+Texturas.append(LoadTexture("Textures/UR.jpg"))
 
 # Define que o tratador de evento para
 # o redesenho da tela. A funcao "display"

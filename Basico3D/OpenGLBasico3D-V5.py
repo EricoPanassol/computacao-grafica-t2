@@ -35,6 +35,7 @@ import random
 import os.path
 import time
 import math
+import playsound
 
 Angulo = 0.0
 Angulo_Carro = 0.0
@@ -47,7 +48,8 @@ camera_view = 0
 Texturas = []
 gasolinas_no_mapa = 0
 gasolinas = []
-tanque = 100
+max_tanque = 500
+tanque = 500
 # **********************************************************************
 #  init()
 #  Inicializa os parÃ¢metros globais de OpenGL
@@ -131,10 +133,10 @@ def DefineLuz():
 # **********************************************************************
 
 def enche_tanque():
-    global tanque
+    global tanque, max_tanque
 
-    if tanque + 10 > 100:
-        tanque = 100
+    if tanque + 10 > max_tanque:
+        tanque = max_tanque
         return
     
     tanque += 10
@@ -340,7 +342,7 @@ def get_gasolina():
             gasolinas.remove(gas)
             gasolinas_no_mapa -= 1
             tanque += 10
-            print("PLIM gasalina c:")
+            playsound.playsound('GASOLINA.mp3', False)
             return
         
 def desenha_gasolinas():
@@ -457,7 +459,7 @@ def keyboard(*args):
     global Angulo_Carro
     global alvo_camera
 
-    var_angulo = 15
+    var_angulo = 10
     #print (args)
     # If escape is pressed, kill everything.
 
@@ -643,6 +645,8 @@ Texturas.append(LoadTexture("Textures/UR.jpg"))
 # for necessÃ¡rio redesenhar a janela
 glutDisplayFunc(display)
 glutIdleFunc (animate)
+
+playsound.playsound('DINGA.mp3', False)
 
 # o redimensionamento da janela. A funcao "reshape"
 # Define que o tratador de evento para

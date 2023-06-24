@@ -36,10 +36,11 @@ import os.path
 import time
 import math
 import playsound
+from ListaDeCores import *
 
 Angulo = 0.0
 Angulo_Carro = 0.0
-Pos_Carro = Ponto(5,0,20)
+Pos_Carro = Ponto(10,0,20)
 alvo = Ponto(Pos_Carro.x,0,Pos_Carro.z+5)
 alvo_camera = Ponto(0,0,0)
 observador = Ponto(0, 4, 13)
@@ -55,6 +56,8 @@ matriz = []
 mapLargura = 30
 mapComprimento = 30
 tamLadrilho = 9
+buildingsHeightList = []
+buildingsWallTextureList = []
 
 # **********************************************************************
 #  init()
@@ -75,6 +78,8 @@ def init():
     #print ("Y:", image.size[1])
     #image.show()
    
+   
+    
 
 # **********************************************************************
 #  reshape( w: int, h: int )
@@ -188,7 +193,7 @@ def PosicUser():
         alvo_camera.x = (tamLadrilho*mapComprimento)/2
         alvo_camera.y = 1
         alvo_camera.z = (tamLadrilho*mapLargura)/2
-        observador = Ponto((tamLadrilho*mapLargura)/2,390,(tamLadrilho*mapComprimento)/2 - 1)
+        observador = Ponto((tamLadrilho*mapLargura)/2,300,(tamLadrilho*mapComprimento)/2 - 1)
 
     gluLookAt(observador.x, observador.y, observador.z, alvo_camera.x,alvo_camera.y,alvo_camera.z, 0,1.0,0)
 
@@ -253,14 +258,17 @@ def lerMatriz(arquivo):
         setBuildings()
 
 def setBuildings():
-    global matriz
+    global matriz, buildingsHeightList, buildingsWallTextureList
     for x in range(0, mapLargura):
         for z in range(0, mapComprimento):
             if matriz[z][x] == 0:
                 matriz[z][x] = random.choice([0,13])
+                buildingsHeightList.append(random.choice([10,20,30,40,50]))
+                buildingsWallTextureList.append(random.choice([14,15,16,17]))
+                
     
-def spawnBuilding(altura, pontoInicial, tamanho):
-    UseTexture(14)
+def spawnBuilding(altura, pontoInicial, tamanho, texture):
+    UseTexture(texture)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(-1,0,0)
@@ -274,7 +282,7 @@ def spawnBuilding(altura, pontoInicial, tamanho):
     glVertex3f(pontoInicial.x + tamanho, 0.0 , pontoInicial.z)
     glEnd()
 
-    UseTexture(14)
+    UseTexture(texture)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,0,-1)
@@ -288,7 +296,7 @@ def spawnBuilding(altura, pontoInicial, tamanho):
     glVertex3f(pontoInicial.x + tamanho, 0.0 , pontoInicial.z + tamanho )
     glEnd()
 
-    UseTexture(14)
+    UseTexture(texture)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(1,0,0)
@@ -302,7 +310,7 @@ def spawnBuilding(altura, pontoInicial, tamanho):
     glVertex3f(pontoInicial.x, 0.0 , pontoInicial.z + tamanho )
     glEnd()
 
-    UseTexture(14)
+    UseTexture(texture)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,0,-1)
@@ -316,7 +324,7 @@ def spawnBuilding(altura, pontoInicial, tamanho):
     glVertex3f(pontoInicial.x, 0.0 , pontoInicial.z)
     glEnd()
 
-    UseTexture(15)
+    UseTexture(18)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,1,0)
@@ -331,24 +339,17 @@ def spawnBuilding(altura, pontoInicial, tamanho):
     glEnd()
 
 def spawnBuildings():
-    global matriz, tamLadrilho
-
+    global matriz, tamLadrilho, buildingsHeightList, buildingsWallTextureList
+    aux = 0
     for x in range(0, mapLargura):
         for z in range(0, mapComprimento):
             if matriz[z][x] == 13:
-                altura = 30
-                pontoInicial = Ponto(x*tamLadrilho,0,z*tamLadrilho)
-                tamanho = tamLadrilho - 1
-                spawnBuilding(altura,pontoInicial,tamanho)
-                
-                glColor3f(1,0,0)
-                UseTexture(14)
-                glPushMatrix()
-                glTranslatef(x*tamLadrilho+tamLadrilho/2,0,z*tamLadrilho+tamLadrilho/2)
-                glScaled(4,30,4)
-                DesenhaCubo()
-                glPopMatrix()
-
+                altura = buildingsHeightList[aux]
+                wallTexture = buildingsWallTextureList[aux]
+                pontoInicial = Ponto(x*tamLadrilho+0.5,0,z*tamLadrilho+0.5)
+                tamanho = tamLadrilho - 1                
+                spawnBuilding(altura,pontoInicial,tamanho, wallTexture)
+                aux += 1
                             
 
 def LoadTexture(nome) -> int:
@@ -468,13 +469,16 @@ def get_gasolina():
             return
         
 def desenha_gasolinas():
+    global Angulo
     for gas in gasolinas:
         glColor3f(1,0,0)
         glPushMatrix()
         glTranslatef(gas.x,gas.y+0.5,gas.z)
-        glScaled(1,1,0.5)
+        # glScaled(1,1,0.5)
+        glRotatef(Angulo,0,1,0)
         DesenhaCubo()
         glPopMatrix()
+        Angulo = Angulo + 0.3
         
     
 
@@ -499,22 +503,9 @@ def display():
     spawn_gasolina()
 
     glMatrixMode(GL_MODELVIEW)
-    
-    DesenhaPiso()
-    glColor3f(0.5,0.0,0.0) # Vermelho
-    glPushMatrix()
-    glTranslatef(-2,0,0)
-    glRotatef(Angulo,0,1,0)
-    DesenhaCubo()
-    glPopMatrix()
-    
-    glColor3f(0.5,0.5,0.0) # Amarelo
-    glPushMatrix()
-    glTranslatef(2,0,0)
-    glRotatef(-Angulo,0,1,0)
-    DesenhaCubo()
-    glPopMatrix()
 
+    DesenhaPiso()
+    
     Angulo = Angulo + 1
 
     #car
@@ -755,7 +746,11 @@ Texturas.append(LoadTexture("Textures/ULR.jpg"))
 Texturas.append(LoadTexture("Textures/UR.jpg"))
 Texturas.append(LoadTexture("Textures/PREDIO1.jpg"))
 Texturas.append(LoadTexture("Textures/PAREDE.jpg"))
+Texturas.append(LoadTexture("Textures/predio2.jpg"))
+Texturas.append(LoadTexture("Textures/predio3.jpg"))
+Texturas.append(LoadTexture("Textures/predio4.jpg"))
 Texturas.append(LoadTexture("Textures/TETO.jpg"))
+
 
 # Define que o tratador de evento para
 # o redesenho da tela. A funcao "display"

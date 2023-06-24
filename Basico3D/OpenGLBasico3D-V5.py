@@ -50,6 +50,12 @@ gasolinas_no_mapa = 0
 gasolinas = []
 max_tanque = 500
 tanque = 500
+matriz = []
+
+mapLargura = 30
+mapComprimento = 30
+tamLadrilho = 10
+
 # **********************************************************************
 #  init()
 #  Inicializa os parÃ¢metros globais de OpenGL
@@ -192,17 +198,19 @@ def PosicUser():
 # O ladrilho tem largula 1, centro no (0,0,0) e estÃ¡ sobre o plano XZ
 # **********************************************************************
 def DesenhaLadrilho():
+    global tamLadrilho
+    
     glColor3f(0.5,0.5,0.5) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,1,0)
     glTexCoord(0,0)
     glVertex3f(0,  0.0, 0)
     glTexCoord(0,1)
-    glVertex3f(0,  0.0,  15)
+    glVertex3f(0,  0.0,  tamLadrilho)
     glTexCoord(1,1)
-    glVertex3f( 15,  0.0,  15)
+    glVertex3f( tamLadrilho,  0.0,  tamLadrilho)
     glTexCoord(1,0)
-    glVertex3f( 15,  0.0, 0)
+    glVertex3f( tamLadrilho,  0.0, 0)
     glEnd()
     
     # glColor3f(1,1,1) # desenha a borda da QUAD 
@@ -216,26 +224,50 @@ def DesenhaLadrilho():
     
 # **********************************************************************
 def DesenhaPiso():
+    global mapLargura, mapComprimento, tamLadrilho
+    
     glPushMatrix()
     glTranslated(0,-1,0)
-    for x in range(-15, 15):
+    for x in range(0, mapLargura):
         glPushMatrix()
-        for z in range(-15, 15):
-            UseTexture((matrizMapa[z+15][x+15]))
+        for z in range(0, mapComprimento):
+            UseTexture((matrizMapa[z][x]))
             DesenhaLadrilho()
-            glTranslated(0, 0, 15)
+            glTranslated(0, 0, tamLadrilho)
         glPopMatrix()
-        glTranslated(15, 0, 0)
+        glTranslated(tamLadrilho, 0, 0)
     glPopMatrix()     
 
 def lerMatriz(arquivo):
-    matriz = []
+    global mapLargura, mapComprimento, matriz
+    
+    
     with open(os.path.dirname(__file__) + arquivo, 'r') as file:
         linhas = file.readlines()
+        mapLargura = len(linhas[1].strip().split()) 
+        mapComprimento = len(linhas[1:])
         for linha in linhas[1:]:
             elementos = linha.strip().split()
             matriz.append([int(elemento) for elemento in elementos])
+        matriz = setBuildings(matriz)
     return matriz
+
+def setBuildings(matriz):
+    for i, x in enumerate(matriz):
+        for j, z in enumerate(x):
+            if z == 0:
+                matriz[i][j] = random.choice([0,13])
+    return matriz
+
+def spawnBuilding(matriz):
+    for linha in matriz:
+        for elem in linha:
+            if elem == 13:
+                DesenhaCubo()
+                            
+                
+    
+    
 
 def LoadTexture(nome) -> int:
     # carrega a imagem
@@ -300,15 +332,17 @@ def UseTexture (NroDaTextura: int):
         glBindTexture(GL_TEXTURE_2D, Texturas[NroDaTextura])
 
 def testaColisao(proxima_pos):
-    pos_x_matriz = proxima_pos.x/15
-    pos_z_matriz = proxima_pos.z/15
+    global tamLadrilho, mapLargura, mapComprimento
+    
+    pos_x_matriz = proxima_pos.x/tamLadrilho
+    pos_z_matriz = proxima_pos.z/tamLadrilho
 
     print(f"pos x: {pos_x_matriz}\npos z: {pos_z_matriz}\n")
-    
-    if pos_x_matriz >= 30 or pos_x_matriz <= 0:
+    print(f"{matrizMapa[int(pos_z_matriz)][int(pos_x_matriz)]}")
+    if pos_x_matriz >= mapLargura or pos_x_matriz <= 0:
         return True
 
-    if pos_z_matriz >= 30 or pos_z_matriz <= 0:
+    if pos_z_matriz >= mapComprimento or pos_z_matriz <= 0:
         return True
 
     if matrizMapa[int(pos_z_matriz)][int(pos_x_matriz)] == 0 or matrizMapa[int(pos_x_matriz)][int(pos_z_matriz)] > 12:
@@ -317,16 +351,18 @@ def testaColisao(proxima_pos):
     return False
 
 def spawn_gasolina():
-    global matrizMapa, gasolinas_no_mapa, gasolinas
+    global matrizMapa, gasolinas_no_mapa, gasolinas, tamLadrilho, mapComprimento, mapLargura
 
     while gasolinas_no_mapa < 5:
-        x_gasolina = random.randint(1,449)
-        z_gasolina = random.randint(1,449)
+        x_gasolina = random.randint(0,(tamLadrilho*mapLargura)-1)
+        z_gasolina = random.randint(0,(tamLadrilho*mapComprimento)-1)
 
-        x_gas_abs = int(x_gasolina/15)
-        z_gas_abs = int(z_gasolina/15)
+        x_gas_abs = int(x_gasolina/tamLadrilho)
+        z_gas_abs = int(z_gasolina/tamLadrilho)
 
-        if matrizMapa[z_gas_abs][x_gas_abs] > 0 and matrizMapa[z_gas_abs][x_gas_abs] <= 12:
+        print("---------------", x_gas_abs, z_gas_abs)
+
+        if matrizMapa[z_gas_abs][x_gas_abs] > 0 and matrizMapa[z_gas_abs][x_gas_abs] <= 13:
             nova_gasolina = Ponto(x_gasolina,0,z_gasolina)
             gasolinas.append(nova_gasolina)
             gasolinas_no_mapa += 1
@@ -367,6 +403,7 @@ def display():
     global Angulo
     global Angulo_Carro
     global moving
+    global matriz
     # Limpa a tela com  a cor de fundo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -532,7 +569,7 @@ def moveForward(fator):
         vetor_alvo = alvo.__sub__(Pos_Carro)
         nova_pos_alvo = alvo.__add__(vetor_alvo.versor().__mul__(fator))
         nova_pos_car = Pos_Carro.__add__(vetor_alvo.versor().__mul__(fator))
-        nova_pos_obs = observador = observador.__add__(vetor_alvo.versor().__mul__(fator))
+        nova_pos_obs = observador.__add__(vetor_alvo.versor().__mul__(fator))
 
         colided = testaColisao(nova_pos_car)
         get_gasolina()
@@ -638,6 +675,7 @@ Texturas.append(LoadTexture("Textures/UDR.jpg"))
 Texturas.append(LoadTexture("Textures/UL.jpg"))
 Texturas.append(LoadTexture("Textures/ULR.jpg"))
 Texturas.append(LoadTexture("Textures/UR.jpg"))
+Texturas.append(LoadTexture("Textures/PREDIO1.jpg"))
 
 # Define que o tratador de evento para
 # o redesenho da tela. A funcao "display"

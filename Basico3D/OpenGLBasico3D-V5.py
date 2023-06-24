@@ -54,7 +54,7 @@ matriz = []
 
 mapLargura = 30
 mapComprimento = 30
-tamLadrilho = 10
+tamLadrilho = 9
 
 # **********************************************************************
 #  init()
@@ -152,7 +152,7 @@ def DesenhaCubo():
     glutSolidCube(1)
     
 def PosicUser():
-    global camera_view, observador, alvo, Pos_Carro, alvo_camera
+    global camera_view, observador, alvo, Pos_Carro, alvo_camera, mapComprimento, mapLargura, tamLadrilho
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
@@ -185,10 +185,10 @@ def PosicUser():
         observador = Ponto(Pos_Carro.x,Pos_Carro.y+1,Pos_Carro.z)
 
     elif camera_view == 3:
-        alvo_camera.x = 225
+        alvo_camera.x = (tamLadrilho*mapComprimento)/2
         alvo_camera.y = 1
-        alvo_camera.z = 225
-        observador = Ponto(225,390,224)
+        alvo_camera.z = (tamLadrilho*mapLargura)/2
+        observador = Ponto((tamLadrilho*mapLargura)/2,390,(tamLadrilho*mapComprimento)/2 - 1)
 
     gluLookAt(observador.x, observador.y, observador.z, alvo_camera.x,alvo_camera.y,alvo_camera.z, 0,1.0,0)
 
@@ -224,14 +224,14 @@ def DesenhaLadrilho():
     
 # **********************************************************************
 def DesenhaPiso():
-    global mapLargura, mapComprimento, tamLadrilho
+    global mapLargura, mapComprimento, tamLadrilho, matriz
     
     glPushMatrix()
-    glTranslated(0,-1,0)
+    glTranslated(0,0,0)
     for x in range(0, mapLargura):
         glPushMatrix()
         for z in range(0, mapComprimento):
-            UseTexture((matrizMapa[z][x]))
+            UseTexture((matriz[z][x]))
             DesenhaLadrilho()
             glTranslated(0, 0, tamLadrilho)
         glPopMatrix()
@@ -241,33 +241,115 @@ def DesenhaPiso():
 def lerMatriz(arquivo):
     global mapLargura, mapComprimento, matriz
     
-    
     with open(os.path.dirname(__file__) + arquivo, 'r') as file:
         linhas = file.readlines()
-        mapLargura = len(linhas[1].strip().split()) 
-        mapComprimento = len(linhas[1:])
+        mapLargura = len(linhas[1:])
+        mapComprimento = len(linhas[1].strip().split()) 
+
         for linha in linhas[1:]:
             elementos = linha.strip().split()
             matriz.append([int(elemento) for elemento in elementos])
-        matriz = setBuildings(matriz)
-    return matriz
 
-def setBuildings(matriz):
-    for i, x in enumerate(matriz):
-        for j, z in enumerate(x):
-            if z == 0:
-                matriz[i][j] = random.choice([0,13])
-    return matriz
+        setBuildings()
 
-def spawnBuilding(matriz):
-    for linha in matriz:
-        for elem in linha:
-            if elem == 13:
-                DesenhaCubo()
-                            
+def setBuildings():
+    global matriz
+    for x in range(0, mapLargura):
+        for z in range(0, mapComprimento):
+            if matriz[z][x] == 0:
+                matriz[z][x] = random.choice([0,13])
+    
+def spawnBuilding(altura, pontoInicial, tamanho):
+    UseTexture(14)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(-1,0,0)
+    glTexCoord(0,0)
+    glVertex3f(pontoInicial.x,  0.0, pontoInicial.z)
+    glTexCoord(0,1)
+    glVertex3f( pontoInicial.x,  altura, pontoInicial.z)
+    glTexCoord(1,1)
+    glVertex3f( pontoInicial.x + tamanho,  altura,pontoInicial.z )
+    glTexCoord(1,0)
+    glVertex3f(pontoInicial.x + tamanho, 0.0 , pontoInicial.z)
+    glEnd()
+
+    UseTexture(14)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,0,-1)
+    glTexCoord(0,0)
+    glVertex3f(pontoInicial.x + tamanho,  0.0, pontoInicial.z)
+    glTexCoord(0,1)
+    glVertex3f( pontoInicial.x + tamanho,  altura, pontoInicial.z)
+    glTexCoord(1,1)
+    glVertex3f( pontoInicial.x + tamanho,  altura, pontoInicial.z + tamanho )
+    glTexCoord(1,0)
+    glVertex3f(pontoInicial.x + tamanho, 0.0 , pontoInicial.z + tamanho )
+    glEnd()
+
+    UseTexture(14)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glTexCoord(0,0)
+    glVertex3f(pontoInicial.x + tamanho,  0.0, pontoInicial.z + tamanho )
+    glTexCoord(0,1)
+    glVertex3f( pontoInicial.x + tamanho,  altura, pontoInicial.z + tamanho )
+    glTexCoord(1,1)
+    glVertex3f( pontoInicial.x,  altura, pontoInicial.z + tamanho  )
+    glTexCoord(1,0)
+    glVertex3f(pontoInicial.x, 0.0 , pontoInicial.z + tamanho )
+    glEnd()
+
+    UseTexture(14)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,0,-1)
+    glTexCoord(0,0)
+    glVertex3f(pontoInicial.x,  0.0, pontoInicial.z + tamanho )
+    glTexCoord(0,1)
+    glVertex3f( pontoInicial.x,  altura, pontoInicial.z + tamanho )
+    glTexCoord(1,1)
+    glVertex3f(  pontoInicial.x,  altura, pontoInicial.z )
+    glTexCoord(1,0)
+    glVertex3f(pontoInicial.x, 0.0 , pontoInicial.z)
+    glEnd()
+
+    UseTexture(15)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,1,0)
+    glTexCoord(0,0)
+    glVertex3f(pontoInicial.x,  altura, pontoInicial.z )
+    glTexCoord(0,1)
+    glVertex3f(pontoInicial.x, altura, pontoInicial.z + tamanho)
+    glTexCoord(1,1)
+    glVertex3f(  pontoInicial.x + tamanho,  altura, pontoInicial.z + tamanho)
+    glTexCoord(1,0)
+    glVertex3f( pontoInicial.x + tamanho,  altura, pontoInicial.z )
+    glEnd()
+
+def spawnBuildings():
+    global matriz, tamLadrilho
+
+    for x in range(0, mapLargura):
+        for z in range(0, mapComprimento):
+            if matriz[z][x] == 13:
+                altura = 30
+                pontoInicial = Ponto(x*tamLadrilho,0,z*tamLadrilho)
+                tamanho = tamLadrilho - 1
+                spawnBuilding(altura,pontoInicial,tamanho)
                 
-    
-    
+                glColor3f(1,0,0)
+                UseTexture(14)
+                glPushMatrix()
+                glTranslatef(x*tamLadrilho+tamLadrilho/2,0,z*tamLadrilho+tamLadrilho/2)
+                glScaled(4,30,4)
+                DesenhaCubo()
+                glPopMatrix()
+
+                            
 
 def LoadTexture(nome) -> int:
     # carrega a imagem
@@ -337,21 +419,25 @@ def testaColisao(proxima_pos):
     pos_x_matriz = proxima_pos.x/tamLadrilho
     pos_z_matriz = proxima_pos.z/tamLadrilho
 
-    print(f"pos x: {pos_x_matriz}\npos z: {pos_z_matriz}\n")
-    print(f"{matrizMapa[int(pos_z_matriz)][int(pos_x_matriz)]}")
     if pos_x_matriz >= mapLargura or pos_x_matriz <= 0:
+        #print("colidiu por sair do x")
         return True
 
     if pos_z_matriz >= mapComprimento or pos_z_matriz <= 0:
+        #print("colidiu por sair do z")
         return True
 
-    if matrizMapa[int(pos_z_matriz)][int(pos_x_matriz)] == 0 or matrizMapa[int(pos_x_matriz)][int(pos_z_matriz)] > 12:
+    if matriz[int(pos_z_matriz)][int(pos_x_matriz)] == 0 or matriz[int(pos_z_matriz)][int(pos_x_matriz)] > 12:
+        #print(f"em cima de {matriz[int(pos_z_matriz)][int(pos_x_matriz)]}")
+        #print("colidiu por piso errado")
         return True
     
+    #print("sem colisão")
+
     return False
 
 def spawn_gasolina():
-    global matrizMapa, gasolinas_no_mapa, gasolinas, tamLadrilho, mapComprimento, mapLargura
+    global matriz, gasolinas_no_mapa, gasolinas, tamLadrilho, mapComprimento, mapLargura
 
     while gasolinas_no_mapa < 5:
         x_gasolina = random.randint(0,(tamLadrilho*mapLargura)-1)
@@ -360,9 +446,9 @@ def spawn_gasolina():
         x_gas_abs = int(x_gasolina/tamLadrilho)
         z_gas_abs = int(z_gasolina/tamLadrilho)
 
-        print("---------------", x_gas_abs, z_gas_abs)
+        #print("---------------", x_gas_abs, z_gas_abs)
 
-        if matrizMapa[z_gas_abs][x_gas_abs] > 0 and matrizMapa[z_gas_abs][x_gas_abs] < 13:
+        if matriz[z_gas_abs][x_gas_abs] > 0 and matriz[z_gas_abs][x_gas_abs] < 13:
             nova_gasolina = Ponto(x_gasolina,0,z_gasolina)
             gasolinas.append(nova_gasolina)
             gasolinas_no_mapa += 1
@@ -385,7 +471,8 @@ def desenha_gasolinas():
     for gas in gasolinas:
         glColor3f(1,0,0)
         glPushMatrix()
-        glTranslatef(gas.x,gas.y,gas.z)
+        glTranslatef(gas.x,gas.y+0.5,gas.z)
+        glScaled(1,1,0.5)
         DesenhaCubo()
         glPopMatrix()
         
@@ -430,27 +517,17 @@ def display():
 
     Angulo = Angulo + 1
 
-    # glColor3f(0.5,1,0.9) 
-    # glPushMatrix()
-    # glTranslatef(alvo.x, 0.0, alvo.z)
-    # DesenhaCubo()
-    # glPopMatrix()
-
     #car
     glColor3f(1,0,1)
     glPushMatrix()
-    glTranslatef(Pos_Carro.x,Pos_Carro.y,Pos_Carro.z)
+    glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
     glRotatef(Angulo_Carro,0,1,0)
     DesenhaCubo()
     glPopMatrix()
 
+    spawnBuildings()
     desenha_gasolinas()
-    #car do eriquin
-    # glColor3f(1,1,1)
-    # glPushMatrix()
-    # glTranslatef(observador.x,-0.1,observador.z)
-    # DesenhaCubo()
-    # glPopMatrix()
+
 
     if(moving):
         moveForward(1)
@@ -535,7 +612,7 @@ def keyboard(*args):
         alvo_camera.y -= 1
 
         
-    print(args)
+    #print(args)
     # ForÃ§a o redesenho da tela
     glutPostRedisplay()
 
@@ -544,13 +621,13 @@ def keyboard(*args):
 # **********************************************************************
 
 def arrow_keys(a_keys: int, x: int, y: int):
-    global alvo, matrizMapa
+    global alvo, matriz
 
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
         change_camera_view()
         pass
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        printMatriz(matrizMapa)
+        #printMatriz(matriz)
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         pass
@@ -584,7 +661,7 @@ def moveForward(fator):
 
         tanque -= 0.1
 
-        Pos_Carro.imprime()
+        #Pos_Carro.imprime()
     
 
 def moveBackward(fator):
@@ -606,7 +683,7 @@ def change_camera_view():
     if camera_view == 4:
         camera_view = 0
 
-    print(f"Camera View: {camera_view}")
+    #print(f"Camera View: {camera_view}")
         
 
 def rotaciona_alvo(angulo_cam):
@@ -644,7 +721,8 @@ def testaColisaoCarro():
 # Programa Principal
 # ***********************************************************************************
 
-matrizMapa = lerMatriz("/Textures/Mapa1.txt")
+#print("LEU MATRIZ HEIN")
+lerMatriz("/Textures/Mapa1.txt")
 
 #Texturas.append(LoadTexture("/Textures/NADA.png"))
 
@@ -676,6 +754,8 @@ Texturas.append(LoadTexture("Textures/UL.jpg"))
 Texturas.append(LoadTexture("Textures/ULR.jpg"))
 Texturas.append(LoadTexture("Textures/UR.jpg"))
 Texturas.append(LoadTexture("Textures/PREDIO1.jpg"))
+Texturas.append(LoadTexture("Textures/PAREDE.jpg"))
+Texturas.append(LoadTexture("Textures/TETO.jpg"))
 
 # Define que o tratador de evento para
 # o redesenho da tela. A funcao "display"

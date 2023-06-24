@@ -362,7 +362,7 @@ def spawn_gasolina():
 
         print("---------------", x_gas_abs, z_gas_abs)
 
-        if matrizMapa[z_gas_abs][x_gas_abs] > 0 and matrizMapa[z_gas_abs][x_gas_abs] <= 13:
+        if matrizMapa[z_gas_abs][x_gas_abs] > 0 and matrizMapa[z_gas_abs][x_gas_abs] < 13:
             nova_gasolina = Ponto(x_gasolina,0,z_gasolina)
             gasolinas.append(nova_gasolina)
             gasolinas_no_mapa += 1

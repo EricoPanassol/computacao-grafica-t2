@@ -29,7 +29,7 @@ from OpenGL.GLU import *
 from Ponto import Ponto
 from Linha import Linha
 from copy import copy
-import numpy as np
+import numpy as np 
 from PIL import Image
 import random
 import os.path
@@ -646,6 +646,9 @@ Texturas.append(LoadTexture("Textures/UR.jpg"))
 glutDisplayFunc(display)
 glutIdleFunc (animate)
 
+
+# pip install playsound==1.2.2 
+# precisa ser essa versão
 playsound.playsound('DINGA.mp3', False)
 
 # o redimensionamento da janela. A funcao "reshape"

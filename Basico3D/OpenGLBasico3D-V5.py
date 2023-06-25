@@ -37,6 +37,7 @@ import time
 import math
 import playsound
 from ListaDeCores import *
+from TObjeto import *
 
 Angulo = 0.0
 Angulo_Carro = 0.0
@@ -59,6 +60,9 @@ mapComprimento = 30
 tamLadrilho = 9
 buildingsHeightList = []
 buildingsWallTextureList = []
+
+Obj3D = Objeto3D()
+MundoVirtual = []
 
 # **********************************************************************
 #  init()
@@ -260,13 +264,16 @@ def lerMatriz(arquivo):
 
 def setBuildings():
     global matriz, buildingsHeightList, buildingsWallTextureList
-    for x in range(0, mapLargura):
-        for z in range(0, mapComprimento):
-            if matriz[z][x] == 0:
-                matriz[z][x] = random.choice([0,13])
-                buildingsHeightList.append(random.choice([10,20,30,40,50]))
-                buildingsWallTextureList.append(random.choice([14,15,16,17,18,19]))
-                
+    qtdBuildings = 0
+    
+    while(qtdBuildings <= 50):
+        for x in range(0, mapLargura):
+            for z in range(0, mapComprimento):
+                if matriz[z][x] == 0:
+                    matriz[z][x] = random.choice([0,13])
+                    buildingsHeightList.append(random.choice([10,20,30,40,50]))
+                    buildingsWallTextureList.append(random.choice([14,15,16,17,18,19]))
+                    qtdBuildings += 1
     
 def spawnBuilding(altura, pontoInicial, tamanho, texture):
     
@@ -532,17 +539,13 @@ def display():
     
     Angulo = Angulo + 1
 
-    #car
-    glColor3f(1,0,1)
-    glPushMatrix()
-    glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
-    glRotatef(Angulo_Carro,0,1,0)
-    DesenhaCubo()
-    glPopMatrix()
+    
+    desenhaCarro()
 
     spawnBuildings()
     desenha_gasolinas()
 
+    # MundoVirtual[0].ExibeObjeto()
 
     if(moving):
         moveForward(1)
@@ -551,6 +554,26 @@ def display():
     
     glutSwapBuffers()
 
+
+def desenhaCarro():
+    global Pos_Carro
+
+    #car
+    glColor3f(1,0,1)
+    glPushMatrix()
+    glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
+    glRotatef(Angulo_Carro,0,1,0)
+    DesenhaCubo()
+    glPopMatrix()
+    
+    glColor3f(0,0,0)
+    glPushMatrix()
+    glTranslatef(Pos_Carro.x,Pos_Carro.y+1,Pos_Carro.z)
+    glRotatef(Angulo_Carro,0,1,0)
+    DesenhaCubo()
+    glPopMatrix()
+    
+    
 
 # **********************************************************************
 # animate()
@@ -770,7 +793,7 @@ def DesenhaEm2D():
     glVertex2f(10,3.5)
     glEnd()
 
-    s = "Tanque: " + str(round(tanque,2)) + "L / 180L "
+    s = "Tanque: " + str(round(tanque,2)) + f"L /  {max_tanque}L"
     printString(s, 0, 1, Black)
 
     defineCor(Red)
@@ -807,6 +830,7 @@ wind = glutCreateWindow("OpenGL 3D")
 # executa algumas inicializaÃ§Ãµes
 init ()
 
+
 Texturas.append(LoadTexture("Textures/GRASS.jpg"))
 Texturas.append(LoadTexture("Textures/CROSS.jpg"))
 Texturas.append(LoadTexture("Textures/DL.jpg"))
@@ -837,6 +861,10 @@ Texturas.append(LoadTexture("Textures/TETO.jpg"))
 glutDisplayFunc(display)
 glutIdleFunc (animate)
 
+# Nome = "caminhao.tri"
+# MundoVirtual.append(Obj3D)
+# MundoVirtual[0].LeObjeto(Nome)
+# print(MundoVirtual[0].faces)
 
 # pip install playsound==1.2.2 
 # precisa ser essa versão

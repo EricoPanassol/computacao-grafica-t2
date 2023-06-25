@@ -49,9 +49,10 @@ camera_view = 0
 Texturas = []
 gasolinas_no_mapa = 0
 gasolinas = []
-max_tanque = 500
-tanque = 500
+max_tanque = 100
+tanque = 100
 matriz = []
+texture_sizes = []
 
 mapLargura = 30
 mapComprimento = 30
@@ -264,21 +265,24 @@ def setBuildings():
             if matriz[z][x] == 0:
                 matriz[z][x] = random.choice([0,13])
                 buildingsHeightList.append(random.choice([10,20,30,40,50]))
-                buildingsWallTextureList.append(random.choice([14,15,16,17]))
+                buildingsWallTextureList.append(random.choice([14,15,16,17,18,19]))
                 
     
 def spawnBuilding(altura, pontoInicial, tamanho, texture):
+    
+    rep_larg, rep_alt = calcular_repeticoes_tamanho(texture,altura,tamanho)
+    
     UseTexture(texture)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(-1,0,0)
     glTexCoord(0,0)
     glVertex3f(pontoInicial.x,  0.0, pontoInicial.z)
-    glTexCoord(0,1)
+    glTexCoord(0,rep_alt)
     glVertex3f( pontoInicial.x,  altura, pontoInicial.z)
-    glTexCoord(1,1)
+    glTexCoord(rep_larg,rep_alt)
     glVertex3f( pontoInicial.x + tamanho,  altura,pontoInicial.z )
-    glTexCoord(1,0)
+    glTexCoord(rep_larg,0)
     glVertex3f(pontoInicial.x + tamanho, 0.0 , pontoInicial.z)
     glEnd()
 
@@ -288,11 +292,11 @@ def spawnBuilding(altura, pontoInicial, tamanho, texture):
     glNormal3f(0,0,-1)
     glTexCoord(0,0)
     glVertex3f(pontoInicial.x + tamanho,  0.0, pontoInicial.z)
-    glTexCoord(0,1)
+    glTexCoord(0,rep_alt)
     glVertex3f( pontoInicial.x + tamanho,  altura, pontoInicial.z)
-    glTexCoord(1,1)
+    glTexCoord(rep_larg,rep_alt)
     glVertex3f( pontoInicial.x + tamanho,  altura, pontoInicial.z + tamanho )
-    glTexCoord(1,0)
+    glTexCoord(rep_larg,0)
     glVertex3f(pontoInicial.x + tamanho, 0.0 , pontoInicial.z + tamanho )
     glEnd()
 
@@ -302,11 +306,11 @@ def spawnBuilding(altura, pontoInicial, tamanho, texture):
     glNormal3f(1,0,0)
     glTexCoord(0,0)
     glVertex3f(pontoInicial.x + tamanho,  0.0, pontoInicial.z + tamanho )
-    glTexCoord(0,1)
+    glTexCoord(0,rep_alt)
     glVertex3f( pontoInicial.x + tamanho,  altura, pontoInicial.z + tamanho )
-    glTexCoord(1,1)
+    glTexCoord(rep_larg,rep_alt)
     glVertex3f( pontoInicial.x,  altura, pontoInicial.z + tamanho  )
-    glTexCoord(1,0)
+    glTexCoord(rep_larg,0)
     glVertex3f(pontoInicial.x, 0.0 , pontoInicial.z + tamanho )
     glEnd()
 
@@ -316,15 +320,15 @@ def spawnBuilding(altura, pontoInicial, tamanho, texture):
     glNormal3f(0,0,-1)
     glTexCoord(0,0)
     glVertex3f(pontoInicial.x,  0.0, pontoInicial.z + tamanho )
-    glTexCoord(0,1)
+    glTexCoord(0,rep_alt)
     glVertex3f( pontoInicial.x,  altura, pontoInicial.z + tamanho )
-    glTexCoord(1,1)
+    glTexCoord(rep_larg,rep_alt)
     glVertex3f(  pontoInicial.x,  altura, pontoInicial.z )
-    glTexCoord(1,0)
+    glTexCoord(rep_larg,0)
     glVertex3f(pontoInicial.x, 0.0 , pontoInicial.z)
     glEnd()
 
-    UseTexture(18)
+    UseTexture(20)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,1,0)
@@ -351,8 +355,20 @@ def spawnBuildings():
                 spawnBuilding(altura,pontoInicial,tamanho, wallTexture)
                 aux += 1
                             
+def calcular_repeticoes_tamanho(textura, altura_obj, largura_obj):
+    global texture_sizes
+
+    largura_textura = texture_sizes[textura][0]  # Largura da textura
+    altura_textura =  texture_sizes[textura][1]  # Altura da textura
+
+    repeticoes_largura = int(largura_obj / (largura_textura/30)) + 1
+    repeticoes_altura = int(altura_obj / (altura_textura/30)) + 1
+
+    return repeticoes_largura, repeticoes_altura
+
 
 def LoadTexture(nome) -> int:
+    global texture_sizes 
     # carrega a imagem
     image = Image.open(nome)
     # print ("X:", image.size[0])
@@ -400,6 +416,9 @@ def LoadTexture(nome) -> int:
         print ("Houve algum erro na criacao da textura.")
         return -1
     #image.show()
+
+    texture_sizes.append([image.size[0], image.size[1]])
+    #print(texture_sizes)
     return texture
 
 def UseTexture (NroDaTextura: int):
@@ -440,7 +459,7 @@ def testaColisao(proxima_pos):
 def spawn_gasolina():
     global matriz, gasolinas_no_mapa, gasolinas, tamLadrilho, mapComprimento, mapLargura
 
-    while gasolinas_no_mapa < 5:
+    while gasolinas_no_mapa < 8:
         x_gasolina = random.randint(0,(tamLadrilho*mapLargura)-1)
         z_gasolina = random.randint(0,(tamLadrilho*mapComprimento)-1)
 
@@ -464,7 +483,12 @@ def get_gasolina():
         if int(gas.x/15) == int(Pos_Carro.x/15) and int(gas.z/15) == int(Pos_Carro.z/15):
             gasolinas.remove(gas)
             gasolinas_no_mapa -= 1
-            tanque += 10
+            
+            if tanque + 10 <= max_tanque:
+                tanque += 10
+            else:
+                tanque = max_tanque
+
             playsound.playsound('GASOLINA.mp3', False)
             return
         
@@ -523,6 +547,8 @@ def display():
     if(moving):
         moveForward(1)
 
+    DesenhaEm2D()
+    
     glutSwapBuffers()
 
 
@@ -659,11 +685,17 @@ def moveBackward(fator):
     global alvo
     global observador
     global Pos_Carro
+    global tanque
     
     vetor_alvo = alvo.__sub__(Pos_Carro)
     alvo = alvo.__sub__(vetor_alvo.versor().__mul__(fator))
     Pos_Carro = Pos_Carro.__sub__(vetor_alvo.versor().__mul__(fator))
     observador = observador.__sub__(vetor_alvo.versor().__mul__(fator))
+
+    if tanque + 5 > max_tanque:
+        tanque = max_tanque
+    else:
+        tanque += 5
     
 
 def change_camera_view():
@@ -707,7 +739,51 @@ def mouseMove(x: int, y: int):
 
 def testaColisaoCarro():
     global Pos_Carro
-        
+
+def printString(s, posX, posY, cor):
+    defineCor(cor)
+    
+    glRasterPos3i(posX, posY, 0)
+    for i in range(len(s)):
+        glutBitmapCharacter(globals()['GLUT_BITMAP_HELVETICA_18'], c_int(ord(s[i])))   
+
+def DesenhaEm2D():
+    global tanque, max_tanque
+
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    
+    w = glutGet(GLUT_WINDOW_WIDTH)
+    h = glutGet(GLUT_WINDOW_HEIGHT)
+
+    glViewport(0, 0, w, int(h*0.1)) 
+
+    glOrtho(0,10, 0,10, 0,1)
+
+    glMatrixMode(GL_MODELVIEW)
+    glLoadIdentity()
+
+    defineCor(Black)
+    glLineWidth(2)
+    glBegin(GL_LINES)
+    glVertex2f(0,3.5)
+    glVertex2f(10,3.5)
+    glEnd()
+
+    s = "Tanque: " + str(round(tanque,2)) + "L / 180L "
+    printString(s, 0, 1, Black)
+
+    defineCor(Red)
+    glLineWidth(35)
+    glBegin(GL_LINES)
+    glVertex2f(0,1.7)
+    glVertex2f(10*(tanque/max_tanque),1.7)
+    glEnd()
+
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    glViewport(0, int(h*0.035), w, h-(int(h*0.035)))
+    
 # ***********************************************************************************
 # Programa Principal
 # ***********************************************************************************
@@ -749,6 +825,8 @@ Texturas.append(LoadTexture("Textures/PAREDE.jpg"))
 Texturas.append(LoadTexture("Textures/predio2.jpg"))
 Texturas.append(LoadTexture("Textures/predio3.jpg"))
 Texturas.append(LoadTexture("Textures/predio4.jpg"))
+Texturas.append(LoadTexture("Textures/predio5.jpg"))
+Texturas.append(LoadTexture("Textures/predio6.jpg"))
 Texturas.append(LoadTexture("Textures/TETO.jpg"))
 
 

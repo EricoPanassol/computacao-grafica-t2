@@ -477,10 +477,10 @@ def spawn_gasolina():
 
 
 def get_gasolina():
-    global gasolinas_no_mapa, tanque
+    global gasolinas_no_mapa, tanque, tamLadrilho
 
     for gas in gasolinas:
-        if int(gas.x/15) == int(Pos_Carro.x/15) and int(gas.z/15) == int(Pos_Carro.z/15):
+        if int(gas.x/tamLadrilho) == int(Pos_Carro.x/tamLadrilho) and int(gas.z/tamLadrilho) == int(Pos_Carro.z/tamLadrilho):
             gasolinas.remove(gas)
             gasolinas_no_mapa -= 1
             

@@ -215,6 +215,6 @@ Very_Light_Purple = 99
 
 def defineCor(c):
     # glColor3fv(Cores[c])
-    glColor3f(Cores[c][0], Cores[c][1], Cores[c][2])
+    glColor4f(Cores[c][0], Cores[c][1], Cores[c][2],1)
 
 						

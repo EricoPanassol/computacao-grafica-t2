@@ -76,16 +76,15 @@ def init():
     glDepthFunc(GL_LESS)
     glEnable(GL_DEPTH_TEST)
     glEnable (GL_CULL_FACE )
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
-    #image = Image.open("Tex.png")
+    #image = Image.open("Tex.jpg")
     #print ("X:", image.size[0])
     #print ("Y:", image.size[1])
     #image.show()
    
-   
-    
-
 # **********************************************************************
 #  reshape( w: int, h: int )
 #  trata o redimensionamento da janela OpenGL
@@ -156,7 +155,6 @@ def enche_tanque():
         return
     
     tanque += 10
-
 
 def DesenhaCubo():
     glutSolidCube(1)
@@ -265,10 +263,11 @@ def lerMatriz(arquivo):
 def setBuildings():
     global matriz, buildingsHeightList, buildingsWallTextureList
     qtdBuildings = 0
-    
+    # print(f"map largura: {mapLargura}, map comprimento: {mapComprimento}")
     while(qtdBuildings <= 50):
-        for x in range(0, mapLargura):
-            for z in range(0, mapComprimento):
+        for x in range(0, mapComprimento):
+            for z in range(0, mapLargura):
+                # print(f"x:{x} z:{z}")
                 if matriz[z][x] == 0:
                     matriz[z][x] = random.choice([0,13])
                     buildingsHeightList.append(random.choice([10,20,30,40,50]))
@@ -373,11 +372,27 @@ def calcular_repeticoes_tamanho(textura, altura_obj, largura_obj):
 
     return repeticoes_largura, repeticoes_altura
 
-
 def LoadTexture(nome) -> int:
-    global texture_sizes 
     # carrega a imagem
     image = Image.open(nome)
+
+    if image:
+        # Get the number of channels in the image
+        nOfColors = len(image.mode)
+        if nOfColors == 4:  # Contains an alpha channel
+            if image.mode == "RGBA":
+                texture_format = GL_RGBA
+            else:
+                texture_format = GL_BGRA
+        elif nOfColors == 3:  # No alpha channel
+            if image.mode == "RGB":
+                texture_format = GL_RGB
+            else:
+                texture_format = GL_BGR
+        else:
+            print("warning: the image is not truecolor.. this will probably break")
+
+        # print(f"Texture Format: {GL_RGB}")
     # print ("X:", image.size[0])
     # print ("Y:", image.size[1])
     # converte para o formato de OpenGL 
@@ -412,7 +427,7 @@ def LoadTexture(nome) -> int:
         print ("Houve algum erro na criacao da textura.")
         return -1
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.size[0], image.size[1], 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.size[0], image.size[1], 0, texture_format, GL_UNSIGNED_BYTE, img_data)
     # neste ponto, "texture" tem o nro da textura que foi carregada
     errorCode = glGetError()
     if errorCode == GL_INVALID_OPERATION:
@@ -431,7 +446,7 @@ def LoadTexture(nome) -> int:
 def UseTexture (NroDaTextura: int):
     global Texturas
     if (NroDaTextura>len(Texturas)):
-        print ("Numero invalido da textura.")
+        print (f"Numero {NroDaTextura} invalido da textura.")
         glDisable (GL_TEXTURE_2D)
         return
     if (NroDaTextura < 0):
@@ -481,8 +496,6 @@ def spawn_gasolina():
             gasolinas_no_mapa += 1
             print(f"Galão de gasolina spawnado em x:{nova_gasolina.x} z:{nova_gasolina.z}")
     
-
-
 def get_gasolina():
     global gasolinas_no_mapa, tanque, tamLadrilho
 
@@ -511,8 +524,6 @@ def desenha_gasolinas():
         glPopMatrix()
         Angulo = Angulo + 0.3
         
-    
-
 def printMatriz(matriz):
     for linha in matriz:
         print(linha)
@@ -539,41 +550,265 @@ def display():
     
     Angulo = Angulo + 1
 
-    
     desenhaCarro()
 
     spawnBuildings()
     desenha_gasolinas()
-
-    # MundoVirtual[0].ExibeObjeto()
+    DesenhaBackground()
 
     if(moving):
         moveForward(1)
-
-    DesenhaEm2D()
     
+    DesenhaEm2D()
+
     glutSwapBuffers()
 
+def DesenhaBackground():
+    DesenhaCeu()
+    DesenhaAmbiente()
+
+def DesenhaCeu():
+    global tamLadrilho, mapComprimento, mapLargura
+    dist = 500
+    maxHeight = 300
+    minHeight = -50
+    UseTexture(21)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glTexCoord(0,1)
+    glVertex3f(-dist,  minHeight, -dist)
+    glTexCoord(1,1)
+    glVertex3f(mapComprimento*tamLadrilho + dist, minHeight , -dist)
+    glTexCoord(1,0)
+    glVertex3f( mapComprimento*tamLadrilho + dist,maxHeight, -dist )
+    glTexCoord(0,0)
+    glVertex3f( -dist,  maxHeight, -dist)
+    glEnd()
+
+    UseTexture(21)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,0,1)
+    glTexCoord(0,1)
+    glVertex3f( -dist, minHeight , -dist)
+    glTexCoord(0,0)
+    glVertex3f( -dist,  maxHeight, -dist)
+    glTexCoord(1,0)
+    glVertex3f( -dist, maxHeight , mapLargura*tamLadrilho + dist)
+    glTexCoord(1,1)
+    glVertex3f( -dist, minHeight , mapLargura*tamLadrilho + dist)
+    glEnd()
+
+    UseTexture(21)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,0,1)
+    glTexCoord(0,1)
+    glVertex3f( mapLargura*tamLadrilho + dist, minHeight , -dist)
+    glTexCoord(1,1)
+    glVertex3f( mapLargura*tamLadrilho + dist, minHeight , mapComprimento*tamLadrilho + dist)
+    glTexCoord(1,0)
+    glVertex3f( mapLargura*tamLadrilho + dist, maxHeight , mapComprimento*tamLadrilho + dist)
+    glTexCoord(0,0)
+    glVertex3f( mapLargura*tamLadrilho + dist, maxHeight , -dist)
+    glEnd()
+
+    UseTexture(21)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glTexCoord(1,1)
+    glVertex3f(-dist,  minHeight, mapComprimento*tamLadrilho+dist)
+    glTexCoord(1,0)
+    glVertex3f( -dist,  maxHeight, mapComprimento*tamLadrilho+dist)
+    glTexCoord(0,0)
+    glVertex3f( mapLargura*tamLadrilho + dist,maxHeight, mapComprimento*tamLadrilho+dist )
+    glTexCoord(0,1)
+    glVertex3f(mapLargura*tamLadrilho + dist, minHeight , mapComprimento*tamLadrilho+dist)
+    glEnd()
+
+def DesenhaAmbiente():
+    global tamLadrilho, mapComprimento, mapLargura
+    dist = 0
+    maxHeight = 10
+    minHeight = 0
+    UseTexture(22)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glTexCoord(0,1)
+    glVertex3f(-dist,  minHeight, -dist)
+    glTexCoord(10,1)
+    glVertex3f(mapComprimento*tamLadrilho + dist, minHeight , -dist)
+    glTexCoord(10,0)
+    glVertex3f( mapComprimento*tamLadrilho + dist,maxHeight, -dist )
+    glTexCoord(0,0)
+    glVertex3f( -dist,  maxHeight, -dist)
+    glEnd()
+
+    UseTexture(22)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,0,1)
+    glTexCoord(0,1)
+    glVertex3f( -dist, minHeight , -dist)
+    glTexCoord(0,0)
+    glVertex3f( -dist,  maxHeight, -dist)
+    glTexCoord(10,0)
+    glVertex3f( -dist, maxHeight , mapLargura*tamLadrilho + dist)
+    glTexCoord(10,1)
+    glVertex3f( -dist, minHeight , mapLargura*tamLadrilho + dist)
+    glEnd()
+
+    UseTexture(22)
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,0,1)
+    glTexCoord(0,1)
+    glVertex3f( mapLargura*tamLadrilho + dist, minHeight , -dist)
+    glTexCoord(10,1)
+    glVertex3f( mapLargura*tamLadrilho + dist, minHeight , mapComprimento*tamLadrilho + dist)
+    glTexCoord(10,0)
+    glVertex3f( mapLargura*tamLadrilho + dist, maxHeight , mapComprimento*tamLadrilho + dist)
+    glTexCoord(0,0)
+    glVertex3f( mapLargura*tamLadrilho + dist, maxHeight , -dist)
+    glEnd()
+
+    UseTexture(22)
+    glColor3f(1,1,1,) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glTexCoord(10,1)
+    glVertex3f(-dist,  minHeight, mapComprimento*tamLadrilho+dist)
+    glTexCoord(10,0)
+    glVertex3f( -dist,  maxHeight, mapComprimento*tamLadrilho+dist)
+    glTexCoord(0,0)
+    glVertex3f( mapLargura*tamLadrilho + dist,maxHeight, mapComprimento*tamLadrilho+dist )
+    glTexCoord(0,1)
+    glVertex3f(mapLargura*tamLadrilho + dist, minHeight , mapComprimento*tamLadrilho+dist)
+    glEnd()
 
 def desenhaCarro():
     global Pos_Carro
-
+    compCarro = 3
+    largCarro = 1.5
+    altCarro = 0.6
+    altCapo = 0.4
+    distChao = 0.05
     #car
-    glColor3f(1,0,1)
+    # glColor3f(1,0,1)
+    # glPushMatrix()
+    # glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
+    # glRotatef(Angulo_Carro,0,1,0)
+    # DesenhaCubo()
+    # glPopMatrix()
+    
+    glColor4f(1,0,0,1)
+
     glPushMatrix()
     glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
     glRotatef(Angulo_Carro,0,1,0)
-    DesenhaCubo()
+     # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,1,0)
+    glVertex3f(largCarro/2,  distChao, compCarro/2 )
+    glVertex3f(largCarro/2, distChao , - compCarro/2)
+    glVertex3f(- largCarro/2, distChao, - compCarro/2 )
+    glVertex3f(- largCarro/2,  distChao, compCarro/2 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,1,0)
+    glVertex3f(largCarro/2,  distChao + altCarro, compCarro/2 )
+    glVertex3f(largCarro/2, distChao + altCarro , - compCarro/2)
+    glVertex3f(- largCarro/2, distChao + altCarro, - compCarro/2 )
+    glVertex3f(- largCarro/2,  distChao + altCarro, compCarro/2 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glVertex3f(- largCarro/2,  distChao, compCarro/2 )
+    glVertex3f(- largCarro/2,  distChao + altCarro, compCarro/2 )
+    glVertex3f(- largCarro/2, distChao + altCarro, - compCarro/2 )
+    glVertex3f(- largCarro/2, distChao, - compCarro/2 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glVertex3f(largCarro/2,  distChao, compCarro/2 )
+    glVertex3f(largCarro/2, distChao, - compCarro/2 )
+    glVertex3f(largCarro/2, distChao + altCarro, - compCarro/2 )
+    glVertex3f(largCarro/2,  distChao + altCarro, compCarro/2 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glVertex3f( largCarro/2,  distChao, - compCarro/2 )
+    glVertex3f( - largCarro/2, distChao, - compCarro/2 )
+    glVertex3f( - largCarro/2, distChao + altCarro, - compCarro/2 )
+    glVertex3f( largCarro/2,  distChao + altCarro, - compCarro/2 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glVertex3f( largCarro/2,  distChao, compCarro/2 )
+    glVertex3f( largCarro/2, distChao + altCarro, compCarro/2 )
+    glVertex3f( - largCarro/2, distChao + altCarro, compCarro/2 )
+    glVertex3f( - largCarro/2,  distChao, compCarro/2 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glVertex3f( largCarro/2,  distChao + altCarro, compCarro/4 )
+    glVertex3f( largCarro/2, distChao + altCarro + altCapo, compCarro/4 )
+    glVertex3f( - largCarro/2, distChao + altCarro + altCapo, compCarro/4 )
+    glVertex3f( - largCarro/2,  distChao + altCarro, compCarro/4 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glVertex3f( largCarro/2,  distChao + altCarro, - compCarro/4 )
+    glVertex3f(  - largCarro/2, distChao + altCarro, - compCarro/4 )
+    glVertex3f(  - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
+    glVertex3f( largCarro/2,  distChao + altCarro + altCapo, - compCarro/4 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,1,0)
+    glVertex3f( largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
+    glVertex3f( largCarro/2, distChao + altCarro + altCapo , - compCarro/4)
+    glVertex3f( - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
+    glVertex3f( - largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
+    glEnd()
+    
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glVertex3f( - largCarro/2,  distChao + altCarro,  compCarro/4 )
+    glVertex3f( - largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
+    glVertex3f( - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
+    glVertex3f( - largCarro/2, distChao + altCarro, - compCarro/4 )
+    glEnd()
+
+    # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(1,0,0)
+    glVertex3f(  largCarro/2,  distChao + altCarro,  compCarro/4 )
+    glVertex3f(  largCarro/2, distChao + altCarro, - compCarro/4 )
+    glVertex3f(  largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
+    glVertex3f(  largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
+    glEnd()
+
     glPopMatrix()
-    
-    glColor3f(0,0,0)
-    glPushMatrix()
-    glTranslatef(Pos_Carro.x,Pos_Carro.y+1,Pos_Carro.z)
-    glRotatef(Angulo_Carro,0,1,0)
-    DesenhaCubo()
-    glPopMatrix()
-    
-    
 
 # **********************************************************************
 # animate()
@@ -613,7 +848,7 @@ def keyboard(*args):
     global Angulo_Carro
     global alvo_camera
 
-    var_angulo = 10
+    var_angulo = 5
     #print (args)
     # If escape is pressed, kill everything.
 
@@ -701,9 +936,8 @@ def moveForward(fator):
 
         tanque -= 0.1
 
-        #Pos_Carro.imprime()
+        # Pos_Carro.imprime()
     
-
 def moveBackward(fator):
     global alvo
     global observador
@@ -720,7 +954,6 @@ def moveBackward(fator):
     else:
         tanque += 5
     
-
 def change_camera_view():
     global camera_view
 
@@ -731,7 +964,6 @@ def change_camera_view():
 
     #print(f"Camera View: {camera_view}")
         
-
 def rotaciona_alvo(angulo_cam):
     global alvo
     global observador
@@ -742,7 +974,6 @@ def rotaciona_alvo(angulo_cam):
     vetor_alvo.rotacionaY(angulo_cam)
 
     alvo = Pos_Carro.__add__(vetor_alvo)
-
 
 def rotaciona_observador(angulo_cam):
     global alvo
@@ -814,7 +1045,7 @@ def DesenhaEm2D():
 #print("LEU MATRIZ HEIN")
 lerMatriz("/Textures/Mapa1.txt")
 
-#Texturas.append(LoadTexture("/Textures/NADA.png"))
+#Texturas.append(LoadTexture("/Textures/NADA.jpg"))
 
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA|GLUT_DEPTH | GLUT_RGB)
@@ -829,7 +1060,6 @@ wind = glutCreateWindow("OpenGL 3D")
 
 # executa algumas inicializaÃ§Ãµes
 init ()
-
 
 Texturas.append(LoadTexture("Textures/GRASS.jpg"))
 Texturas.append(LoadTexture("Textures/CROSS.jpg"))
@@ -852,7 +1082,8 @@ Texturas.append(LoadTexture("Textures/predio4.jpg"))
 Texturas.append(LoadTexture("Textures/predio5.jpg"))
 Texturas.append(LoadTexture("Textures/predio6.jpg"))
 Texturas.append(LoadTexture("Textures/TETO.jpg"))
-
+Texturas.append(LoadTexture("Textures/sky.jpg"))
+Texturas.append(LoadTexture("Textures/arvore.png"))
 
 # Define que o tratador de evento para
 # o redesenho da tela. A funcao "display"
@@ -868,7 +1099,7 @@ glutIdleFunc (animate)
 
 # pip install playsound==1.2.2 
 # precisa ser essa versão
-playsound.playsound('DINGA.mp3', False)
+# playsound.playsound('DINGA.mp3', False)
 
 # o redimensionamento da janela. A funcao "reshape"
 # Define que o tratador de evento para
@@ -892,7 +1123,6 @@ glutSpecialFunc(arrow_keys)
 
 #glutMouseFunc(mouse)
 #glutMotionFunc(mouseMove)
-
 
 try:
     # inicia o tratamento dos eventos

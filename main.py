@@ -542,7 +542,7 @@ def get_gasolina():
             else:
                 tanque = max_tanque
 
-            # playsound.playsound('GASOLINA.mp3', False)
+            # playsound.playsound('./Sounds/GASOLINA.mp3', False)
             return
         
 # **********************************************************************
@@ -1146,7 +1146,7 @@ glutIdleFunc (animate)
 
 # pip install playsound==1.2.2 
 # precisa ser essa versão
-# playsound.playsound('DINGA.mp3', False)
+# playsound.playsound('./Sounds/DINGA.mp3', False)
 
 # o redimensionamento da janela. A funcao "reshape"
 # Define que o tratador de evento para

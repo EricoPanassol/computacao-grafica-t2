@@ -1085,7 +1085,7 @@ def DesenhaEm2D():
     printString(s, 0, 1, Black)
 
     defineCor(Red)
-    glLineWidth(35)
+    glLineWidth(32)
     glBegin(GL_LINES)
     glVertex2f(0,1.7)
     glVertex2f(10*(tanque/max_tanque),1.7)

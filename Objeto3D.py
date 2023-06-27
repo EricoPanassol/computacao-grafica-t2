@@ -38,12 +38,12 @@ class Objeto3D:
             t.imprime()
 
     def ExibeObjeto(self,ponto,angulo):
-        glColor4f(1,0,0,1)
+        glColor4f(1,1,1,1)
 
         glPushMatrix()
         glTranslatef(ponto.x,ponto.y+0.5,ponto.z)
         glRotatef(angulo,0,1,0)
-        glScalef(0.7,0.7,0.7)
+        glScalef(1,1,1)
         glRotatef(270,0,1,0)
         # desenha QUAD preenchido
         for t in self.faces:

@@ -181,12 +181,13 @@ def PosicUser():
     elif camera_view == 1:
         alvo_camera.x = alvo.x
         alvo_camera.z = alvo.z
-        observador = Ponto(Pos_Carro.x,Pos_Carro.y+100,Pos_Carro.z)
+        observador = Ponto(Pos_Carro.x,Pos_Carro.y+50,Pos_Carro.z)
 
     elif camera_view == 2:
         alvo_camera.x = alvo.x
+        alvo_camera.y = alvo.y + 1
         alvo_camera.z = alvo.z
-        observador = Ponto(Pos_Carro.x,Pos_Carro.y+1,Pos_Carro.z)
+        observador = Ponto(Pos_Carro.x,Pos_Carro.y+1.8,Pos_Carro.z)
 
     elif camera_view == 3:
         alvo_camera.x = (tamLadrilho*mapComprimento)/2

@@ -39,7 +39,7 @@ from ListaDeCores import *
 
 Angulo = 0.0
 Angulo_Carro = 0.0
-Pos_Carro = Ponto(10,0,20)
+Pos_Carro = Ponto(140,0,20)
 alvo = Ponto(Pos_Carro.x,0,Pos_Carro.z+5)
 alvo_camera = Ponto(0,0,0)
 observador = Ponto(0, 4, 13)

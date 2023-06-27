@@ -35,7 +35,6 @@ from PIL import Image
 import random
 import os.path
 import time
-import playsound
 from ListaDeCores import *
 
 Angulo = 0.0
@@ -160,14 +159,10 @@ def PosicUser():
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    # Seta a viewport para ocupar toda a janela
-    # glViewport(0, 0, 500, 500)
-    #print ("AspectRatio", AspectRatio)
     
     gluPerspective(60,AspectRatio,0.01,1000) # Projecao perspectiva
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    #gluLookAt(observador.x, observador.y+2, observador.z, alvo.x,alvo.y,alvo.z, 0,1.0,0) 
 
     if camera_view == 0:
         vetor_alvo = alvo.__sub__(Pos_Carro)
@@ -257,13 +252,13 @@ def DesenhaAgua():
     glBegin ( GL_QUADS )
     glNormal3f(0,1,0)
     glTexCoord(0,0)
-    glVertex3f(-1000,  -4, -1000)
+    glVertex3f(-500,  -4, -500)
     glTexCoord(0,200)
-    glVertex3f(-1000,  -4,  1000)
+    glVertex3f(-500,  -4,  500)
     glTexCoord(200,200)
-    glVertex3f( 1000,  -4,  1000)
+    glVertex3f( 500,  -4,  500)
     glTexCoord(200,0)
-    glVertex3f( 1000,  -4, -1000)
+    glVertex3f( 500,  -4, -500)
     glEnd()
 
 def lerMatriz(arquivo):
@@ -493,19 +488,13 @@ def testaColisao(proxima_pos):
     pos_z_matriz = proxima_pos.z/tamLadrilho
 
     if pos_x_matriz >= mapLargura or pos_x_matriz <= 0:
-        #print("colidiu por sair do x")
         return True
 
     if pos_z_matriz >= mapComprimento or pos_z_matriz <= 0:
-        #print("colidiu por sair do z")
         return True
 
     if matriz[int(pos_z_matriz)][int(pos_x_matriz)] == 0 or matriz[int(pos_z_matriz)][int(pos_x_matriz)] > 12:
-        #print(f"em cima de {matriz[int(pos_z_matriz)][int(pos_x_matriz)]}")
-        #print("colidiu por piso errado")
         return True
-    
-    #print("sem colisão")
 
     return False
 
@@ -548,7 +537,6 @@ def get_gasolina():
             else:
                 tanque = max_tanque
 
-            # playsound.playsound('./Sounds/GASOLINA.mp3', False)
             return
         
 # **********************************************************************
@@ -600,7 +588,7 @@ def display():
     DesenhaBackground()
 
     if(moving):
-        moveForward(0.9)
+        moveForward(1.3)
     
     DesenhaEm2D()
 
@@ -746,127 +734,9 @@ def DesenhaBase():
 #  Função que desenha e modela o carro
 # **********************************************************************
 def desenhaCarro():
-    global Pos_Carro, Vaca
-    compCarro = 3
-    largCarro = 1.5
-    altCarro = 0.6
-    altCapo = 0.4
-    distChao = 0.05
-
+    global Pos_Carro
     Carro.ExibeObjeto(Pos_Carro,Angulo_Carro)
-    #car
-    # glColor3f(1,0,1)
-    # glPushMatrix()
-    # glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
-    # glRotatef(Angulo_Carro,0,1,0)
-    # DesenhaCubo()
-    # glPopMatrix()
-    
-    # glColor4f(1,0,0,1)
 
-    # glPushMatrix()
-    # glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
-    # glRotatef(Angulo_Carro,0,1,0)
-    #  # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(0,1,0)
-    # glVertex3f(largCarro/2,  distChao, compCarro/2 )
-    # glVertex3f(largCarro/2, distChao , - compCarro/2)
-    # glVertex3f(- largCarro/2, distChao, - compCarro/2 )
-    # glVertex3f(- largCarro/2,  distChao, compCarro/2 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(0,1,0)
-    # glVertex3f(largCarro/2,  distChao + altCarro, compCarro/2 )
-    # glVertex3f(largCarro/2, distChao + altCarro , - compCarro/2)
-    # glVertex3f(- largCarro/2, distChao + altCarro, - compCarro/2 )
-    # glVertex3f(- largCarro/2,  distChao + altCarro, compCarro/2 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(1,0,0)
-    # glVertex3f(- largCarro/2,  distChao, compCarro/2 )
-    # glVertex3f(- largCarro/2,  distChao + altCarro, compCarro/2 )
-    # glVertex3f(- largCarro/2, distChao + altCarro, - compCarro/2 )
-    # glVertex3f(- largCarro/2, distChao, - compCarro/2 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(1,0,0)
-    # glVertex3f(largCarro/2,  distChao, compCarro/2 )
-    # glVertex3f(largCarro/2, distChao, - compCarro/2 )
-    # glVertex3f(largCarro/2, distChao + altCarro, - compCarro/2 )
-    # glVertex3f(largCarro/2,  distChao + altCarro, compCarro/2 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(1,0,0)
-    # glVertex3f( largCarro/2,  distChao, - compCarro/2 )
-    # glVertex3f( - largCarro/2, distChao, - compCarro/2 )
-    # glVertex3f( - largCarro/2, distChao + altCarro, - compCarro/2 )
-    # glVertex3f( largCarro/2,  distChao + altCarro, - compCarro/2 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(1,0,0)
-    # glVertex3f( largCarro/2,  distChao, compCarro/2 )
-    # glVertex3f( largCarro/2, distChao + altCarro, compCarro/2 )
-    # glVertex3f( - largCarro/2, distChao + altCarro, compCarro/2 )
-    # glVertex3f( - largCarro/2,  distChao, compCarro/2 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(1,0,0)
-    # glVertex3f( largCarro/2,  distChao + altCarro, compCarro/4 )
-    # glVertex3f( largCarro/2, distChao + altCarro + altCapo, compCarro/4 )
-    # glVertex3f( - largCarro/2, distChao + altCarro + altCapo, compCarro/4 )
-    # glVertex3f( - largCarro/2,  distChao + altCarro, compCarro/4 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(1,0,0)
-    # glVertex3f( largCarro/2,  distChao + altCarro, - compCarro/4 )
-    # glVertex3f(  - largCarro/2, distChao + altCarro, - compCarro/4 )
-    # glVertex3f(  - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
-    # glVertex3f( largCarro/2,  distChao + altCarro + altCapo, - compCarro/4 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(0,1,0)
-    # glVertex3f( largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
-    # glVertex3f( largCarro/2, distChao + altCarro + altCapo , - compCarro/4)
-    # glVertex3f( - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
-    # glVertex3f( - largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
-    # glEnd()
-    
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(1,0,0)
-    # glVertex3f( - largCarro/2,  distChao + altCarro,  compCarro/4 )
-    # glVertex3f( - largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
-    # glVertex3f( - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
-    # glVertex3f( - largCarro/2, distChao + altCarro, - compCarro/4 )
-    # glEnd()
-
-    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    # glBegin ( GL_QUADS )
-    # glNormal3f(1,0,0)
-    # glVertex3f(  largCarro/2,  distChao + altCarro,  compCarro/4 )
-    # glVertex3f(  largCarro/2, distChao + altCarro, - compCarro/4 )
-    # glVertex3f(  largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
-    # glVertex3f(  largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
-    # glEnd()
-
-    # glPopMatrix()
 
 # **********************************************************************
 # animate()
@@ -889,7 +759,7 @@ def animate():
     TempoTotal += dt
     nFrames += 1
     
-    if AccumDeltaT > 1.0/60:  # fixa a atualizaÃ§Ã£o da tela em 30
+    if AccumDeltaT > 1.0/30:  # fixa a atualizaÃ§Ã£o da tela em 30
         AccumDeltaT = 0
         glutPostRedisplay()
 
@@ -905,7 +775,7 @@ def keyboard(*args):
     global Angulo_Carro
     global alvo_camera
 
-    var_angulo = 5
+    var_angulo = 10
     #print (args)
     # If escape is pressed, kill everything.
 

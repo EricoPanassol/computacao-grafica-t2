@@ -28,6 +28,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from Ponto import Ponto
 from Linha import Linha
+from Objeto3D import Objeto3D
 from copy import copy
 import numpy as np 
 from PIL import Image
@@ -39,7 +40,7 @@ from ListaDeCores import *
 
 Angulo = 0.0
 Angulo_Carro = 0.0
-Pos_Carro = Ponto(140,0,20)
+Pos_Carro = Ponto(160,0,50)
 alvo = Ponto(Pos_Carro.x,0,Pos_Carro.z+5)
 alvo_camera = Ponto(0,0,0)
 observador = Ponto(0, 4, 13)
@@ -175,7 +176,7 @@ def PosicUser():
         obs_pos = Pos_Carro.__sub__(vetor_alvo)
         alvo_camera.x = alvo.x
         alvo_camera.z = alvo.z
-        observador = Ponto(obs_pos.x, obs_pos.y+3, obs_pos.z)
+        observador = Ponto(obs_pos.x, obs_pos.y+5, obs_pos.z)
     
     elif camera_view == 1:
         alvo_camera.x = alvo.x
@@ -242,7 +243,27 @@ def DesenhaPiso():
             glTranslated(0, 0, tamLadrilho)
         glPopMatrix()
         glTranslated(tamLadrilho, 0, 0)
-    glPopMatrix()     
+    glPopMatrix()
+
+    glPushMatrix()
+    glTranslated(0,0,0)
+    UseTexture(23)
+    DesenhaAgua()
+    glPopMatrix() 
+
+def DesenhaAgua():
+    glColor3f(1,1,1) # desenha QUAD preenchido
+    glBegin ( GL_QUADS )
+    glNormal3f(0,1,0)
+    glTexCoord(0,0)
+    glVertex3f(-1000,  -4, -1000)
+    glTexCoord(0,200)
+    glVertex3f(-1000,  -4,  1000)
+    glTexCoord(200,200)
+    glVertex3f( 1000,  -4,  1000)
+    glTexCoord(200,0)
+    glVertex3f( 1000,  -4, -1000)
+    glEnd()
 
 def lerMatriz(arquivo):
     global mapLargura, mapComprimento, matriz
@@ -270,7 +291,7 @@ def setBuildings():
             for z in range(0, mapLargura):
                 # print(f"x:{x} z:{z}")
                 if matriz[z][x] == 0:
-                    matriz[z][x] = random.choice([0,13])
+                    matriz[z][x] = random.choice([0,0,0,13,13])
                     buildingsHeightList.append(random.choice([10,20,30,40,50]))
                     buildingsWallTextureList.append(random.choice([14,15,16,17,18,19]))
                     qtdBuildings += 1
@@ -393,23 +414,7 @@ def LoadTexture(nome) -> int:
     # carrega a imagem
     image = Image.open(nome)
 
-    if image:
-        # Get the number of channels in the image
-        nOfColors = len(image.mode)
-        if nOfColors == 4:  # Contains an alpha channel
-            if image.mode == "RGBA":
-                texture_format = GL_RGBA
-            else:
-                texture_format = GL_BGRA
-        elif nOfColors == 3:  # No alpha channel
-            if image.mode == "RGB":
-                texture_format = GL_RGB
-            else:
-                texture_format = GL_BGR
-        else:
-            print("warning: the image is not truecolor.. this will probably break")
-
-        # print(f"Texture Format: {GL_RGB}")
+    # print(f"Texture Format: {GL_RGB}")
     # print ("X:", image.size[0])
     # print ("Y:", image.size[1])
     # converte para o formato de OpenGL 
@@ -444,7 +449,7 @@ def LoadTexture(nome) -> int:
         print ("Houve algum erro na criacao da textura.")
         return -1
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.size[0], image.size[1], 0, texture_format, GL_UNSIGNED_BYTE, img_data)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.size[0], image.size[1], 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
     # neste ponto, "texture" tem o nro da textura que foi carregada
     errorCode = glGetError()
     if errorCode == GL_INVALID_OPERATION:
@@ -577,17 +582,17 @@ def display():
     # Limpa a tela com  a cor de fundo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+
     DefineLuz()
     PosicUser()
     spawn_gasolina()
+    desenhaCarro()
 
     glMatrixMode(GL_MODELVIEW)
 
     DesenhaPiso()
     
     Angulo = Angulo + 1
-
-    desenhaCarro()
 
     spawnBuildings()
     desenha_gasolinas()
@@ -605,7 +610,7 @@ def display():
 # **********************************************************************
 def DesenhaBackground():
     DesenhaCeu()
-    DesenhaAmbiente()
+    DesenhaBase()
 
 # **********************************************************************
 #  Função que desenha o céu
@@ -613,7 +618,7 @@ def DesenhaBackground():
 def DesenhaCeu():
     global tamLadrilho, mapComprimento, mapLargura
     dist = 500
-    maxHeight = 300
+    maxHeight = 500
     minHeight = -50
     UseTexture(21)
     glColor3f(1,1,1) # desenha QUAD preenchido
@@ -674,65 +679,65 @@ def DesenhaCeu():
 # **********************************************************************
 #  Função que desenha o ambiente
 # **********************************************************************
-def DesenhaAmbiente():
+def DesenhaBase():
     global tamLadrilho, mapComprimento, mapLargura
     dist = 0
-    maxHeight = 10
-    minHeight = 0
+    maxHeight = 0
+    minHeight = -5
     UseTexture(22)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(1,0,0)
-    glTexCoord(0,1)
+    glTexCoord(0,10)
     glVertex3f(-dist,  minHeight, -dist)
-    glTexCoord(10,1)
-    glVertex3f(mapComprimento*tamLadrilho + dist, minHeight , -dist)
-    glTexCoord(10,0)
+    glTexCoord(1,10)
+    glVertex3f( -dist,  maxHeight, -dist)
+    glTexCoord(1,0)
     glVertex3f( mapComprimento*tamLadrilho + dist,maxHeight, -dist )
     glTexCoord(0,0)
-    glVertex3f( -dist,  maxHeight, -dist)
+    glVertex3f(mapComprimento*tamLadrilho + dist, minHeight , -dist)
     glEnd()
 
     UseTexture(22)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,0,1)
-    glTexCoord(0,1)
+    glTexCoord(0,10)
     glVertex3f( -dist, minHeight , -dist)
     glTexCoord(0,0)
-    glVertex3f( -dist,  maxHeight, -dist)
-    glTexCoord(10,0)
-    glVertex3f( -dist, maxHeight , mapLargura*tamLadrilho + dist)
-    glTexCoord(10,1)
     glVertex3f( -dist, minHeight , mapLargura*tamLadrilho + dist)
+    glTexCoord(1,0)
+    glVertex3f( -dist, maxHeight , mapLargura*tamLadrilho + dist)
+    glTexCoord(1,10)
+    glVertex3f( -dist,  maxHeight, -dist)
     glEnd()
 
     UseTexture(22)
     glColor3f(1,1,1) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(0,0,1)
-    glTexCoord(0,1)
+    glTexCoord(0,10)
     glVertex3f( mapLargura*tamLadrilho + dist, minHeight , -dist)
-    glTexCoord(10,1)
-    glVertex3f( mapLargura*tamLadrilho + dist, minHeight , mapComprimento*tamLadrilho + dist)
-    glTexCoord(10,0)
+    glTexCoord(1,10)
+    glVertex3f( mapLargura*tamLadrilho + dist, maxHeight , -dist)
+    glTexCoord(1,0)
     glVertex3f( mapLargura*tamLadrilho + dist, maxHeight , mapComprimento*tamLadrilho + dist)
     glTexCoord(0,0)
-    glVertex3f( mapLargura*tamLadrilho + dist, maxHeight , -dist)
+    glVertex3f( mapLargura*tamLadrilho + dist, minHeight , mapComprimento*tamLadrilho + dist)
     glEnd()
 
     UseTexture(22)
     glColor3f(1,1,1,) # desenha QUAD preenchido
     glBegin ( GL_QUADS )
     glNormal3f(1,0,0)
-    glTexCoord(10,1)
+    glTexCoord(1,10)
     glVertex3f(-dist,  minHeight, mapComprimento*tamLadrilho+dist)
-    glTexCoord(10,0)
-    glVertex3f( -dist,  maxHeight, mapComprimento*tamLadrilho+dist)
+    glTexCoord(1,0)
+    glVertex3f(mapLargura*tamLadrilho + dist, minHeight , mapComprimento*tamLadrilho+dist)
     glTexCoord(0,0)
     glVertex3f( mapLargura*tamLadrilho + dist,maxHeight, mapComprimento*tamLadrilho+dist )
-    glTexCoord(0,1)
-    glVertex3f(mapLargura*tamLadrilho + dist, minHeight , mapComprimento*tamLadrilho+dist)
+    glTexCoord(0,10)
+    glVertex3f( -dist,  maxHeight, mapComprimento*tamLadrilho+dist)
     glEnd()
 
 
@@ -740,12 +745,14 @@ def DesenhaAmbiente():
 #  Função que desenha e modela o carro
 # **********************************************************************
 def desenhaCarro():
-    global Pos_Carro
+    global Pos_Carro, Vaca
     compCarro = 3
     largCarro = 1.5
     altCarro = 0.6
     altCapo = 0.4
     distChao = 0.05
+
+    Carro.ExibeObjeto(Pos_Carro,Angulo_Carro)
     #car
     # glColor3f(1,0,1)
     # glPushMatrix()
@@ -754,111 +761,111 @@ def desenhaCarro():
     # DesenhaCubo()
     # glPopMatrix()
     
-    glColor4f(1,0,0,1)
+    # glColor4f(1,0,0,1)
 
-    glPushMatrix()
-    glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
-    glRotatef(Angulo_Carro,0,1,0)
-     # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(0,1,0)
-    glVertex3f(largCarro/2,  distChao, compCarro/2 )
-    glVertex3f(largCarro/2, distChao , - compCarro/2)
-    glVertex3f(- largCarro/2, distChao, - compCarro/2 )
-    glVertex3f(- largCarro/2,  distChao, compCarro/2 )
-    glEnd()
+    # glPushMatrix()
+    # glTranslatef(Pos_Carro.x,Pos_Carro.y+0.5,Pos_Carro.z)
+    # glRotatef(Angulo_Carro,0,1,0)
+    #  # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(0,1,0)
+    # glVertex3f(largCarro/2,  distChao, compCarro/2 )
+    # glVertex3f(largCarro/2, distChao , - compCarro/2)
+    # glVertex3f(- largCarro/2, distChao, - compCarro/2 )
+    # glVertex3f(- largCarro/2,  distChao, compCarro/2 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(0,1,0)
-    glVertex3f(largCarro/2,  distChao + altCarro, compCarro/2 )
-    glVertex3f(largCarro/2, distChao + altCarro , - compCarro/2)
-    glVertex3f(- largCarro/2, distChao + altCarro, - compCarro/2 )
-    glVertex3f(- largCarro/2,  distChao + altCarro, compCarro/2 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(0,1,0)
+    # glVertex3f(largCarro/2,  distChao + altCarro, compCarro/2 )
+    # glVertex3f(largCarro/2, distChao + altCarro , - compCarro/2)
+    # glVertex3f(- largCarro/2, distChao + altCarro, - compCarro/2 )
+    # glVertex3f(- largCarro/2,  distChao + altCarro, compCarro/2 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(1,0,0)
-    glVertex3f(- largCarro/2,  distChao, compCarro/2 )
-    glVertex3f(- largCarro/2,  distChao + altCarro, compCarro/2 )
-    glVertex3f(- largCarro/2, distChao + altCarro, - compCarro/2 )
-    glVertex3f(- largCarro/2, distChao, - compCarro/2 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(1,0,0)
+    # glVertex3f(- largCarro/2,  distChao, compCarro/2 )
+    # glVertex3f(- largCarro/2,  distChao + altCarro, compCarro/2 )
+    # glVertex3f(- largCarro/2, distChao + altCarro, - compCarro/2 )
+    # glVertex3f(- largCarro/2, distChao, - compCarro/2 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(1,0,0)
-    glVertex3f(largCarro/2,  distChao, compCarro/2 )
-    glVertex3f(largCarro/2, distChao, - compCarro/2 )
-    glVertex3f(largCarro/2, distChao + altCarro, - compCarro/2 )
-    glVertex3f(largCarro/2,  distChao + altCarro, compCarro/2 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(1,0,0)
+    # glVertex3f(largCarro/2,  distChao, compCarro/2 )
+    # glVertex3f(largCarro/2, distChao, - compCarro/2 )
+    # glVertex3f(largCarro/2, distChao + altCarro, - compCarro/2 )
+    # glVertex3f(largCarro/2,  distChao + altCarro, compCarro/2 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(1,0,0)
-    glVertex3f( largCarro/2,  distChao, - compCarro/2 )
-    glVertex3f( - largCarro/2, distChao, - compCarro/2 )
-    glVertex3f( - largCarro/2, distChao + altCarro, - compCarro/2 )
-    glVertex3f( largCarro/2,  distChao + altCarro, - compCarro/2 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(1,0,0)
+    # glVertex3f( largCarro/2,  distChao, - compCarro/2 )
+    # glVertex3f( - largCarro/2, distChao, - compCarro/2 )
+    # glVertex3f( - largCarro/2, distChao + altCarro, - compCarro/2 )
+    # glVertex3f( largCarro/2,  distChao + altCarro, - compCarro/2 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(1,0,0)
-    glVertex3f( largCarro/2,  distChao, compCarro/2 )
-    glVertex3f( largCarro/2, distChao + altCarro, compCarro/2 )
-    glVertex3f( - largCarro/2, distChao + altCarro, compCarro/2 )
-    glVertex3f( - largCarro/2,  distChao, compCarro/2 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(1,0,0)
+    # glVertex3f( largCarro/2,  distChao, compCarro/2 )
+    # glVertex3f( largCarro/2, distChao + altCarro, compCarro/2 )
+    # glVertex3f( - largCarro/2, distChao + altCarro, compCarro/2 )
+    # glVertex3f( - largCarro/2,  distChao, compCarro/2 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(1,0,0)
-    glVertex3f( largCarro/2,  distChao + altCarro, compCarro/4 )
-    glVertex3f( largCarro/2, distChao + altCarro + altCapo, compCarro/4 )
-    glVertex3f( - largCarro/2, distChao + altCarro + altCapo, compCarro/4 )
-    glVertex3f( - largCarro/2,  distChao + altCarro, compCarro/4 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(1,0,0)
+    # glVertex3f( largCarro/2,  distChao + altCarro, compCarro/4 )
+    # glVertex3f( largCarro/2, distChao + altCarro + altCapo, compCarro/4 )
+    # glVertex3f( - largCarro/2, distChao + altCarro + altCapo, compCarro/4 )
+    # glVertex3f( - largCarro/2,  distChao + altCarro, compCarro/4 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(1,0,0)
-    glVertex3f( largCarro/2,  distChao + altCarro, - compCarro/4 )
-    glVertex3f(  - largCarro/2, distChao + altCarro, - compCarro/4 )
-    glVertex3f(  - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
-    glVertex3f( largCarro/2,  distChao + altCarro + altCapo, - compCarro/4 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(1,0,0)
+    # glVertex3f( largCarro/2,  distChao + altCarro, - compCarro/4 )
+    # glVertex3f(  - largCarro/2, distChao + altCarro, - compCarro/4 )
+    # glVertex3f(  - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
+    # glVertex3f( largCarro/2,  distChao + altCarro + altCapo, - compCarro/4 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(0,1,0)
-    glVertex3f( largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
-    glVertex3f( largCarro/2, distChao + altCarro + altCapo , - compCarro/4)
-    glVertex3f( - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
-    glVertex3f( - largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(0,1,0)
+    # glVertex3f( largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
+    # glVertex3f( largCarro/2, distChao + altCarro + altCapo , - compCarro/4)
+    # glVertex3f( - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
+    # glVertex3f( - largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
+    # glEnd()
     
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(1,0,0)
-    glVertex3f( - largCarro/2,  distChao + altCarro,  compCarro/4 )
-    glVertex3f( - largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
-    glVertex3f( - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
-    glVertex3f( - largCarro/2, distChao + altCarro, - compCarro/4 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(1,0,0)
+    # glVertex3f( - largCarro/2,  distChao + altCarro,  compCarro/4 )
+    # glVertex3f( - largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
+    # glVertex3f( - largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
+    # glVertex3f( - largCarro/2, distChao + altCarro, - compCarro/4 )
+    # glEnd()
 
-    # glColor4f(1,0,1,1) # desenha QUAD preenchido
-    glBegin ( GL_QUADS )
-    glNormal3f(1,0,0)
-    glVertex3f(  largCarro/2,  distChao + altCarro,  compCarro/4 )
-    glVertex3f(  largCarro/2, distChao + altCarro, - compCarro/4 )
-    glVertex3f(  largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
-    glVertex3f(  largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
-    glEnd()
+    # # glColor4f(1,0,1,1) # desenha QUAD preenchido
+    # glBegin ( GL_QUADS )
+    # glNormal3f(1,0,0)
+    # glVertex3f(  largCarro/2,  distChao + altCarro,  compCarro/4 )
+    # glVertex3f(  largCarro/2, distChao + altCarro, - compCarro/4 )
+    # glVertex3f(  largCarro/2, distChao + altCarro + altCapo, - compCarro/4 )
+    # glVertex3f(  largCarro/2,  distChao + altCarro + altCapo,  compCarro/4 )
+    # glEnd()
 
-    glPopMatrix()
+    # glPopMatrix()
 
 # **********************************************************************
 # animate()
@@ -1073,7 +1080,7 @@ def DesenhaEm2D():
     glVertex2f(10,3.5)
     glEnd()
 
-    s = "Tanque: " + str(round(tanque,2)) + f"L /  {max_tanque}L"
+    s = "Gasolina: " + str(round(tanque,2)) + f"L /  {max_tanque}L"
     printString(s, 0, 1, Black)
 
     defineCor(Red)
@@ -1110,20 +1117,24 @@ wind = glutCreateWindow("Car Game")
 # executa algumas inicializaÃ§Ãµes
 init ()
 
+Carro = Objeto3D()
+Carro.LeObjeto("Objetos/AE86.tri")
+#Vaca.ImprimeObjeto()
+
 try: 
-    Texturas.append(LoadTexture("./Textures/GRASS.jpg"))
-    Texturas.append(LoadTexture("./Textures/CROSS.jpg"))
-    Texturas.append(LoadTexture("./Textures/DL.jpg"))
-    Texturas.append(LoadTexture("./Textures/DLR.jpg"))
-    Texturas.append(LoadTexture("./Textures/DR.jpg"))
-    Texturas.append(LoadTexture("./Textures/LR.jpg"))
-    Texturas.append(LoadTexture("./Textures/None.jpg"))
-    Texturas.append(LoadTexture("./Textures/UD.jpg"))
-    Texturas.append(LoadTexture("./Textures/UDL.jpg"))
-    Texturas.append(LoadTexture("./Textures/UDR.jpg"))
-    Texturas.append(LoadTexture("./Textures/UL.jpg"))
-    Texturas.append(LoadTexture("./Textures/ULR.jpg"))
-    Texturas.append(LoadTexture("./Textures/UR.jpg"))
+    Texturas.append(LoadTexture("./Textures/GRASS2.jpg"))
+    Texturas.append(LoadTexture("./Textures/CROSS2.jpg"))
+    Texturas.append(LoadTexture("./Textures/DL2.jpg"))
+    Texturas.append(LoadTexture("./Textures/DLR2.jpg"))
+    Texturas.append(LoadTexture("./Textures/DR2.jpg"))
+    Texturas.append(LoadTexture("./Textures/LR2.jpg"))
+    Texturas.append(LoadTexture("./Textures/None2.jpg"))
+    Texturas.append(LoadTexture("./Textures/UD2.jpg"))
+    Texturas.append(LoadTexture("./Textures/UDL2.jpg"))
+    Texturas.append(LoadTexture("./Textures/UDR2.jpg"))
+    Texturas.append(LoadTexture("./Textures/UL2.jpg"))
+    Texturas.append(LoadTexture("./Textures/ULR2.jpg"))
+    Texturas.append(LoadTexture("./Textures/UR2.jpg"))
     Texturas.append(LoadTexture("./Textures/PREDIO1.jpg"))
     Texturas.append(LoadTexture("./Textures/PAREDE.jpg"))
     Texturas.append(LoadTexture("./Textures/predio2.jpg"))
@@ -1132,8 +1143,9 @@ try:
     Texturas.append(LoadTexture("./Textures/predio5.jpg"))
     Texturas.append(LoadTexture("./Textures/predio6.jpg"))
     Texturas.append(LoadTexture("./Textures/TETO.jpg"))
-    Texturas.append(LoadTexture("./Textures/sky.jpg"))
-    Texturas.append(LoadTexture("./Textures/arvore.png"))
+    Texturas.append(LoadTexture("./Textures/ceu.jpg"))
+    Texturas.append(LoadTexture("./Textures/TIJOLOS.jpg"))
+    Texturas.append(LoadTexture("./Textures/agua.jpg"))
 except:
     print(f"Texturas não encontradas")
 

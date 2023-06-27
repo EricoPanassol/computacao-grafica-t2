@@ -600,7 +600,7 @@ def display():
     DesenhaBackground()
 
     if(moving):
-        moveForward(1)
+        moveForward(0.9)
     
     DesenhaEm2D()
 
